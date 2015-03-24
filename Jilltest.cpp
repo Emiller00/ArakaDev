@@ -1493,23 +1493,25 @@ switch(Top_AI_State){
 
           break;
         case AI_Attacking:
-                  if( CloseDistanceY(10, InPosY)){
+         IsFlipped = (InPosX>mPosX);
+         if( CloseDistanceY(10, InPosY)){
                         Bottom_AI_State = AI_Moving_In_X;
 
                   }
-
             break;
         case AI_Moving_In_X:
-
-               if( KeepDistanceX(10, InPosX,150)){
-                        if(abs(InPosY-mPosY)>31){
-
+                if(abs(InPosY-mPosY)>30){
+                        Move_State = AI_No_move;
                          Bottom_AI_State = AI_Attacking;
-                        }
-                        else{
-                            Bottom_AI_State = AI_Punch;
-                        }
-               }
+
+                                                    }
+
+         else if( KeepDistanceX(10, InPosX,150)){
+
+                          Bottom_AI_State = AI_Punch;
+
+                                                    }
+
 
             break;
 
@@ -1553,7 +1555,7 @@ switch(Top_AI_State){
         }
     break;
         }
-
+cout<<"InPosX is "<<InPosX<<" mPosX is "<<mPosX<<" "<<IsFlipped<<endl;
 }
 
 vector<SDL_Rect> MeleeEnemy::GetHitBoxes(){
@@ -3309,9 +3311,10 @@ int main( int argc, char* args[] )
 				jill.move();
 				jill.Logic();
 
-
                 enemy2.move();
                 enemy2.AI(jill.getPosX(),jill.getPosY());
+
+
 
 
                 //Dawn Destroy's a bullet if it hits an enemy
