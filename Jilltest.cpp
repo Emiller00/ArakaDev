@@ -148,11 +148,12 @@ RIGHT_DIAGONAL_COLLISION
 
 };
     enum Melee_Enemy_AI_Bottom_State{
-    AI_Keeping_distance,
+    AI_Keeping_distance_Y,
+    AI_Keeping_distance_X,
     AI_Idle,
     AI_Moving_In_Y,
-    AI_Moving_In_X,
-    AI_Attacking,
+    AI_Moving_In_X_Attacking,
+    AI_Moving_In_Y_Attacking,
     AI_Punch
 };
 
@@ -517,6 +518,8 @@ class Dawn: public RenderSprite
 
         int GetWidth();
 
+        void DetectHit(vector<SDL_Rect> InRect, float InPosY);
+
         private:
 
 		/*
@@ -756,7 +759,7 @@ public:
         BulletHandler EnemyBullets;
 
         vector<attackboxes> EnemyHitBoxes;
-
+        vector<attackboxes> EnemyAttackBoxes;
         int HitCounter = 0;
 
         Melee_Enemy_AI_Top_State Top_AI_State;
@@ -776,6 +779,7 @@ public:
 
         int OffSetArray[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         int OffSetArrayFlipped[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        int KeepingXDistanct = 0;
 };
 
 // This class will make make an object that will check if a coordinate has collided with it
@@ -1122,10 +1126,10 @@ MeleeEnemy::MeleeEnemy(float inPosX, float inPosY)
     anim_indicator = false;
 
     Top_AI_State = Melee_Enemy_Attack;
-    Bottom_AI_State = AI_Keeping_distance;
+    Bottom_AI_State = AI_Keeping_distance_Y;
     Move_State = AI_No_move;
     EnemyHitBoxes = CollisionBoxArray("MeleeEnemyInput.txt");
-
+     EnemyAttackBoxes = CollisionBoxArray("MeleeEnemyAttackInput.txt");
           gMeleeEnemyClips[0].x = 0;
           gMeleeEnemyClips[0].y = 0;
           gMeleeEnemyClips[0].w = 80;
@@ -1284,6 +1288,7 @@ void MeleeEnemy::SetCam( float cXpos, float cYpos){
 
 int MeleeEnemy::Framer(){
 
+
           if(MeleeEnemyAnim == MELEE_ENEMY_IDLE){
 
                     Frame = 0;
@@ -1354,7 +1359,6 @@ void MeleeEnemy::HitBoxRender(){
       BoxH = EnemyHitBoxes.at(BoxFrame).AttackRects.at(i).mH*ENEMY_SCALE;
 
       }
-
       SDL_Rect fillRect = { BoxX, BoxY-VertDis, BoxW, BoxH};
     //  cout<<"Enemy's Rect"<<fillRect.x<<" "<<fillRect.y<<" "<<fillRect.w<<" "<<fillRect.h<<" "<<endl;
       SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
@@ -1479,30 +1483,56 @@ switch(Top_AI_State){
 
     if(MeleeEnemyAnim !=MELEE_ENEMY_REACT){
         switch(Bottom_AI_State){
-      case AI_Keeping_distance:
-                            CloseDistanceY(50,InPosY);
-                       //     cout<<" choice1 "<<endl;
-                    if((rand()%20 == 19)){
+      case AI_Keeping_distance_Y:
+                if( CloseDistanceY(50, InPosY)){
+                        Bottom_AI_State = AI_Keeping_distance_X;
+                        Move_State = AI_No_move;
 
-                    Bottom_AI_State = AI_Attacking;
+                  }
+                       //     cout<<" choice1 "<<endl;
+                    if((rand()%200 == 19)){
+
+                    Bottom_AI_State = AI_Moving_In_Y_Attacking;
                     }
+
+                    IsFlipped = (InPosX>mPosX);
+
+           break;
+        case AI_Keeping_distance_X:
+
+            if(KeepDistanceX(10, InPosX,250+KeepingXDistanct)){
+                KeepingXDistanct = rand()%100-50;
+            };
+            if((rand()%200 == 19)){
+
+                    Bottom_AI_State = AI_Moving_In_Y_Attacking;
+                    Move_State = AI_No_move;
+            }
+                    if(abs(InPosY-mPosY)>50){
+                        Move_State = AI_No_move;
+                         Bottom_AI_State = AI_Keeping_distance_Y;
+
+                            }
+
+
+
                     IsFlipped = (InPosX>mPosX);
            break;
         case AI_Idle:
                //  cout<<" choice2 "<<endl;
 
           break;
-        case AI_Attacking:
+        case AI_Moving_In_Y_Attacking:
          IsFlipped = (InPosX>mPosX);
          if( CloseDistanceY(10, InPosY)){
-                        Bottom_AI_State = AI_Moving_In_X;
+                        Bottom_AI_State = AI_Moving_In_X_Attacking;
 
                   }
             break;
-        case AI_Moving_In_X:
+        case AI_Moving_In_X_Attacking:
                 if(abs(InPosY-mPosY)>30){
                         Move_State = AI_No_move;
-                         Bottom_AI_State = AI_Attacking;
+                         Bottom_AI_State = AI_Moving_In_Y_Attacking;
 
                                                     }
 
@@ -1525,9 +1555,15 @@ switch(Top_AI_State){
 
                 }
                 else if (EndPunch){
-                    Bottom_AI_State = AI_Keeping_distance;
+
                     ThrowPunch = false;
                     EndPunch = false;
+                    if(!( rand()%5 == 3)){
+                        Bottom_AI_State = AI_Keeping_distance_X;
+                    }
+                    else{
+                         Bottom_AI_State = AI_Moving_In_X_Attacking;
+                    }
                 }
 
         break;
@@ -1553,9 +1589,10 @@ switch(Top_AI_State){
                 Move_State = AI_Walk_Right;
 
         }
+
     break;
         }
-cout<<"InPosX is "<<InPosX<<" mPosX is "<<mPosX<<" "<<IsFlipped<<endl;
+
 }
 
 vector<SDL_Rect> MeleeEnemy::GetHitBoxes(){
@@ -1571,6 +1608,7 @@ vector<SDL_Rect> MeleeEnemy::GetHitBoxes(){
         TempRect.w = BoxRectToSDL_Rect(EnemyHitBoxes.at(ThisFrame).AttackRects.at(i)).w*ENEMY_SCALE;
         TempRect.h = BoxRectToSDL_Rect(EnemyHitBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
+
       // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
         TempRect = {0,0,0,0};
     }
@@ -1584,6 +1622,7 @@ vector<SDL_Rect> MeleeEnemy::GetHitBoxes(){
         TempRect.w = BoxRectToSDL_Rect(EnemyHitBoxes.at(ThisFrame).AttackRects.at(i)).w*ENEMY_SCALE;
         TempRect.h = BoxRectToSDL_Rect(EnemyHitBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
+
       // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
         TempRect = {0,0,0,0};
     }
@@ -1601,29 +1640,31 @@ vector<SDL_Rect> MeleeEnemy::GetAttackBoxes(){
     vector<SDL_Rect> ReturnRectVect;
     SDL_Rect TempRect = {0,0,0,0};
     if (IsFlipped == false){
-    for(int i = 0; i<EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.size();i++){
-        BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i));
-        TempRect.x = BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).x*DAWN_SCALE+ScreenPosX;
-        TempRect.y = BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).y*DAWN_SCALE+ScreenPosY;
-        TempRect.w = BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).w*DAWN_SCALE;
-        TempRect.h = BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).h*DAWN_SCALE;
+    for(int i = 0; i<EnemyAttackBoxes.at(ThisFrame).AttackRects.size();i++){
+        BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i));
+        TempRect.x = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).x*ENEMY_SCALE+ScreenPosX;
+        TempRect.y = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).y*ENEMY_SCALE+ScreenPosY;
+        TempRect.w = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).w*ENEMY_SCALE;
+        TempRect.h = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
-     //  cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
+
+      // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
         TempRect = {0,0,0,0};
     }
 
     }
     else if(IsFlipped == true){
-        for(int i = 0; i<EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.size();i++){
-        BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i));
-        TempRect.x = ScreenPosX+335*DAWN_SCALE-BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).x*DAWN_SCALE-BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).w*DAWN_SCALE;
-        TempRect.y = BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).y*DAWN_SCALE+ScreenPosY;
-        TempRect.w = BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).w*DAWN_SCALE;
-        TempRect.h = BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).h*DAWN_SCALE;
+        for(int i = 0; i<EnemyAttackBoxes.at(ThisFrame).AttackRects.size();i++){
+        BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i));
+        TempRect.x = ScreenPosX+335*DAWN_SCALE-BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).x*ENEMY_SCALE-BoxRectToSDL_Rect(EnemyHitBoxes.at(Frame/ANIM_SPEED).AttackRects.at(i)).w*ENEMY_SCALE;
+        TempRect.y = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).y*ENEMY_SCALE+ScreenPosY;
+        TempRect.w = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).w*ENEMY_SCALE;
+        TempRect.h = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
+
       // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
         TempRect = {0,0,0,0};
-        }
+    }
 
 
     }
@@ -1935,6 +1976,30 @@ int Dawn::framer(){
               //  cout<<Frame/ANIM_SPEED<<endl;
 				return Frame;
 
+}
+
+void Dawn::DetectHit(vector<SDL_Rect> InRect, float InPosY){
+    SDL_Rect TempRect;
+    SDL_Rect TempRect1 = InRect.at(0);
+    SDL_Rect TempRect2 = GetHitBoxes().at(0);
+ //if((mPosY-15-InPosY)>17){
+   // cout<<TempRect1.x<<" "<<TempRect2.x<<" "<<TempRect2.x+TempRect2.w<<endl;
+    for(int i = 0; i<InRect.size();i++){
+    TempRect1 = InRect.at(0);
+    TempRect2 = GetHitBoxes().at(0);
+            if(  SDL_IntersectRect(&TempRect2,&TempRect1,&TempRect)){
+
+                renderflag = true;
+
+               // cout<<"Dawn was hit"<<endl;
+    }
+            else{
+           renderflag = false;
+            }
+
+    }
+
+  //  }
 }
 
 void Dawn::Logic(){
@@ -3324,7 +3389,7 @@ int main( int argc, char* args[] )
                 //Dawn and the enemy detect hitboxes
 
                 enemy2.DetectHit(jill.GetAttackBoxes(),jill.getPosY());
-
+                jill.DetectHit(enemy2.GetAttackBoxes(),enemy2.getPosY());
                 //Center the camera over the dot
 				camera.x = ( jill.getPosX() + jill.GetWidth() / 2 ) - SCREEN_WIDTH / 2;
 				camera.y = ( jill.getPosY() + jill.GetWidth()/ 2 ) - SCREEN_HEIGHT / 2;
