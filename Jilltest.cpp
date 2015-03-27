@@ -1577,9 +1577,12 @@ switch(Top_AI_State){
 
     case Melee_Enemy_Patrol:
 
-        if(abs(InPosY-20-mPosY)<150){
+        if(abs(InPosY-20-mPosY)<100){
             if(((mVelX>0)&&(mPosX+450>InPosX)&&(mPosX<InPosX))||((mVelX<0)&&(mPosX-450<InPosX)&&(mPosX>InPosX))){
             renderflag2 = true;
+
+            Top_AI_State = Melee_Enemy_Attack;
+
             }
             else{
                 renderflag2 = false;
