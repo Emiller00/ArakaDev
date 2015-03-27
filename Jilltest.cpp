@@ -41,6 +41,7 @@ const int BGTILE_SIZE = 2000;
 const int DAWN_VEL = 4;
 bool ControlState = false;
 bool renderflag = false;
+bool renderflag2 = false;
 bool HitBoxFlag = false;
 // Animation Variable.
 // Note the sign Convention
@@ -1125,7 +1126,7 @@ MeleeEnemy::MeleeEnemy(float inPosX, float inPosY)
 
     anim_indicator = false;
 
-    Top_AI_State = Melee_Enemy_Attack;
+    Top_AI_State = Melee_Enemy_Patrol;
     Bottom_AI_State = AI_Keeping_distance_Y;
     Move_State = AI_No_move;
     EnemyHitBoxes = CollisionBoxArray("MeleeEnemyInput.txt");
@@ -1575,6 +1576,18 @@ switch(Top_AI_State){
     break;
 
     case Melee_Enemy_Patrol:
+
+        if(abs(InPosY-20-mPosY)<150){
+            if(((mVelX>0)&&(mPosX+450>InPosX)&&(mPosX<InPosX))||((mVelX<0)&&(mPosX-450<InPosX)&&(mPosX>InPosX))){
+            renderflag2 = true;
+            }
+            else{
+                renderflag2 = false;
+            }
+        }
+        else{
+            renderflag2 = false;
+        }
 
         if(ENEMY_WALK_VEL/2>=abs(mPosX-NavPoint->mX)){
 
@@ -3273,17 +3286,17 @@ int main( int argc, char* args[] )
 			OcclusionTile Room1(Room1Rect,&gRoom1);
 			Dawn jill;
             Enemy enemy1;
-            MeleeEnemy enemy2(200,2015);
+            MeleeEnemy enemy2(1500,733);
             PatrolPoint TempPoint;
             vector<PatrolPoint> TempPatrolPointVector;
             TempPatrolPointVector.push_back(TempPoint);
             TempPatrolPointVector.push_back(TempPoint);
             TempPatrolPointVector.at(0).NextPoint = &TempPatrolPointVector.at(1);
-            TempPatrolPointVector.at(0).mX = 200;
-            TempPatrolPointVector.at(0).mY = 2015;
+            TempPatrolPointVector.at(0).mX = 1500;
+            TempPatrolPointVector.at(0).mY = 733;
             TempPatrolPointVector.at(1).NextPoint = &TempPatrolPointVector.at(0);
-            TempPatrolPointVector.at(1).mX = 600;
-            TempPatrolPointVector.at(1).mY = 2015;
+            TempPatrolPointVector.at(1).mX = 3200;
+            TempPatrolPointVector.at(1).mY = 733;
             enemy2.GetPatrol(TempPatrolPointVector);
 
             CollisionLine  LineOne(0,2093,1620,HORIZONTAL_LINE, false);
@@ -3491,7 +3504,16 @@ int main( int argc, char* args[] )
 
 
                 }
+                if(renderflag2){
 
+                        //              if(blinker){
+                 SDL_SetRenderDrawColor( gRenderer, 0x2a, 0xFF, 0x00, 0x67 );
+                  SDL_Rect fillRect = { 600, 100, 50, 50};
+                  SDL_RenderFillRect( gRenderer, &fillRect );
+                        //                }
+
+
+                }
                 if(true){
 
 
