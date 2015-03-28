@@ -44,6 +44,7 @@ bool ControlState = false;
 bool renderflag = false;
 bool renderflag2 = false;
 bool renderflag3 = false;
+bool LineRenderFlag = false;
 bool HitBoxFlag = false;
 // Animation Variable.
 // Note the sign Convention
@@ -3427,6 +3428,12 @@ int main( int argc, char* args[] )
                         HitBoxFlag = !HitBoxFlag;
 
 						}
+                        if(  e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
+						{
+
+                        LineRenderFlag = !LineRenderFlag;
+
+						}
 
 					}
 					//Handle input for the dot
@@ -3576,7 +3583,7 @@ int main( int argc, char* args[] )
 
 
                 }
-                if(true){
+                if(LineRenderFlag){
 
 
                 // SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
