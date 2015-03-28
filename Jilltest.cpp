@@ -43,6 +43,7 @@ const int WALL_HEIGHT = 433;
 bool ControlState = false;
 bool renderflag = false;
 bool renderflag2 = false;
+bool renderflag3 = false;
 bool HitBoxFlag = false;
 // Animation Variable.
 // Note the sign Convention
@@ -130,8 +131,10 @@ DAWN_PRESS_DOWN
 
 enum CollisionLineType{
     VERTICAL_LINE,
-    HORIZONTAL_LINE,
-    DIAGONAL_LINE
+    HORIZONTAL_LINE_LOWER_STOP,
+    HORIZONTAL_LINE_UPPER_STOP,
+    DIAGONAL_LINE_RIGHT_STOP,
+    DIAGONAL_LINE_LEFT_STOP
 };
 
 enum CollisionType{
@@ -2461,7 +2464,7 @@ vector<BulletCoord> Dawn::GetJillBullets(){
 
 bool Dawn::CheckCollisionLine(CollisionLine* JillsLine){
 
-    if((JillsLine->GetType()==HORIZONTAL_LINE)&&(mPosX+150>JillsLine->GetLineCoord().mX)&&(mPosX+70<(JillsLine->GetLineCoord().mX+JillsLine->GetLineLength()))){
+    if((JillsLine->GetType()==HORIZONTAL_LINE_LOWER_STOP)&&(mPosX+150>JillsLine->GetLineCoord().mX)&&(mPosX+70<(JillsLine->GetLineCoord().mX+JillsLine->GetLineLength()))){
 
        if((mVelY<0)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE<mPosY)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE>mPosY+mVelY*0.70710678118)){
 
@@ -2471,6 +2474,37 @@ bool Dawn::CheckCollisionLine(CollisionLine* JillsLine){
 
 
        }
+    if((JillsLine->GetType()==HORIZONTAL_LINE_UPPER_STOP)&&(mPosX+150>JillsLine->GetLineCoord().mX)&&(mPosX+70<(JillsLine->GetLineCoord().mX+JillsLine->GetLineLength()))){
+
+       if((mVelY>0)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE>mPosY)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE<mPosY+mVelY*0.70710678118)){
+
+    //    cout<<"Jill is crossing"<<endl<<endl;
+        return true;
+       }
+    }
+    if((JillsLine->GetType()==DIAGONAL_LINE_RIGHT_STOP)&&(mPosY+305*DAWN_SCALE>JillsLine->GetLineCoord().mY)&&((mPosY+305*DAWN_SCALE)<(JillsLine->GetLineCoord().mY+JillsLine->GetLineLength()/1.41421356237))){
+
+
+       if((mVelX<0)&&(mPosY+305*DAWN_SCALE<mPosX+109*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)&&(mPosY+305*DAWN_SCALE-mVelX>mPosX+109*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)){
+
+
+        return true;
+
+       }
+
+    }
+
+    if((JillsLine->GetType()==DIAGONAL_LINE_LEFT_STOP)&&(mPosY+305*DAWN_SCALE>JillsLine->GetLineCoord().mY)&&((mPosY+305*DAWN_SCALE)<(JillsLine->GetLineCoord().mY+JillsLine->GetLineLength()/1.41421356237))){
+
+
+       if((mVelX>0)&&(mPosY+305*DAWN_SCALE>mPosX+220*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)&&(mPosY+305*DAWN_SCALE-mVelX<mPosX+220*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)){
+
+
+        return true;
+
+       }
+
+    }
       //  cout<<endl;
         return false;
 }
@@ -2766,10 +2800,10 @@ return false;
 
 void CollisionLine::RenderLine(SDL_Rect InputRect){
   SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
-  if(ThisLine == HORIZONTAL_LINE){
+  if((ThisLine == HORIZONTAL_LINE_LOWER_STOP)||(ThisLine == HORIZONTAL_LINE_UPPER_STOP)){
  SDL_RenderDrawLine(gRenderer,(BeginCoord.mX - InputRect.x  ),(BeginCoord.mY - InputRect.y ),(BeginCoord.mX - InputRect.x + LineLength),(BeginCoord.mY - InputRect.y ));
   }
-  else if (ThisLine == DIAGONAL_LINE){
+  else if ((ThisLine == DIAGONAL_LINE_LEFT_STOP)||(ThisLine == DIAGONAL_LINE_RIGHT_STOP)){
  SDL_RenderDrawLine(gRenderer,(BeginCoord.mX - InputRect.x  ),(BeginCoord.mY - InputRect.y ),(BeginCoord.mX+LineLength*.7071067- InputRect.x),(BeginCoord.mY+LineLength*.7071067 - InputRect.y ));
   }
 
@@ -3309,13 +3343,17 @@ int main( int argc, char* args[] )
             TempPatrolPointVector.at(1).mY = 733;
             enemy2.GetPatrol(TempPatrolPointVector);
 
-            CollisionLine  LineOne(0,2093,1620,HORIZONTAL_LINE, false);
-            CollisionLine  LineTwo(390,863,1740,DIAGONAL_LINE, true);
-            CollisionLine  LineThree(390,865,1132,HORIZONTAL_LINE, true);
-            CollisionLine  LineFour(1038,375,690,DIAGONAL_LINE,true);
-            CollisionLine  LineFive(1038,375,585,HORIZONTAL_LINE,true);
-            CollisionLine  LineSix(1615,375,690,DIAGONAL_LINE,true);
-            CollisionLine  LineSeven(2101,863,1550,HORIZONTAL_LINE, true);
+            CollisionLine  LineOne(0,2093,1620,HORIZONTAL_LINE_LOWER_STOP, true);
+            CollisionLine  LineTwo(390,863,1740,DIAGONAL_LINE_RIGHT_STOP, true);
+            CollisionLine  LineThree(390,865,1132,HORIZONTAL_LINE_LOWER_STOP, true);
+            CollisionLine  LineFour(1038,375,690,DIAGONAL_LINE_RIGHT_STOP,true);
+            CollisionLine  LineFive(1038,375,585,HORIZONTAL_LINE_LOWER_STOP,true);
+            CollisionLine  LineSix(1615,375,690,DIAGONAL_LINE_LEFT_STOP,true);
+            CollisionLine  LineSeven(2101,863,1550,HORIZONTAL_LINE_LOWER_STOP, true);
+            CollisionLine  LineEight(1325,1030,1515,DIAGONAL_LINE_LEFT_STOP, true);
+            CollisionLine  LineNine(1325,1030,1679,HORIZONTAL_LINE_UPPER_STOP, false);
+            CollisionLine  LineTen(3015,1030,1515,DIAGONAL_LINE_RIGHT_STOP, true);
+            CollisionLine  LineEleven(2400,2105,1679,HORIZONTAL_LINE_LOWER_STOP, true);
             // The vector that stores our collision lines
             vector<CollisionLine*> CollisionVector;
             CollisionVector.push_back(&LineOne);
@@ -3325,6 +3363,10 @@ int main( int argc, char* args[] )
             CollisionVector.push_back(&LineFive);
             CollisionVector.push_back(&LineSix);
             CollisionVector.push_back(&LineSeven);
+            CollisionVector.push_back(&LineEight);
+            CollisionVector.push_back(&LineNine);
+            CollisionVector.push_back(&LineTen);
+            CollisionVector.push_back(&LineEleven);
             jill.GetCollisionVector(CollisionVector);
             int BulletToDestroy;
             CoverBox Box1(400,350);
@@ -3519,6 +3561,16 @@ int main( int argc, char* args[] )
                         //              if(blinker){
                  SDL_SetRenderDrawColor( gRenderer, 0x2a, 0xFF, 0x00, 0x67 );
                   SDL_Rect fillRect = { 600, 100, 50, 50};
+                  SDL_RenderFillRect( gRenderer, &fillRect );
+                        //                }
+
+
+                }
+                if(renderflag3){
+
+                        //              if(blinker){
+                 SDL_SetRenderDrawColor( gRenderer, 0x2a, 0xFF, 0xFF, 0x67 );
+                  SDL_Rect fillRect = { 400, 100, 50, 50};
                   SDL_RenderFillRect( gRenderer, &fillRect );
                         //                }
 
