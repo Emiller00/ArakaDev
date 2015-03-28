@@ -2910,7 +2910,7 @@ void OcclusionTile::render(SDL_Rect camRect,float inPosX, float inPosY){
 
     // If the following line is true.
     // Than fade in the wall
-    if((inPosY+305*DAWN_SCALE<TileRect.y+TileRect.h)&&((TileRect.x+TileRect.w)<109*DAWN_SCALE+inPosX)||(inPosY+305*DAWN_SCALE<TileRect.y+TileRect.h-WALL_HEIGHT)&&(((inPosY+305*DAWN_SCALE)<(inPosX+109*DAWN_SCALE+TileRect.y+TileRect.h-WALL_HEIGHT-(TileRect.x+TileRect.w))))||(inPosY+305*DAWN_SCALE>TileRect.y+TileRect.h)){
+    if((inPosY+305*DAWN_SCALE<TileRect.y+TileRect.h)&&((TileRect.x+TileRect.w)<109*DAWN_SCALE+inPosX)||(inPosY+305*DAWN_SCALE<TileRect.y+TileRect.h-WALL_HEIGHT)&&(((inPosY+305*DAWN_SCALE)<(inPosX+109*DAWN_SCALE+TileRect.y+TileRect.h-WALL_HEIGHT-(TileRect.x+TileRect.w))))||(inPosY+305*DAWN_SCALE>TileRect.y+TileRect.h||(((inPosY+305*DAWN_SCALE)>(inPosX+200*DAWN_SCALE+TileRect.y+WALL_HEIGHT-(TileRect.x)))))){
 
 
      if(ThisAlpha<255){  ThisAlpha+= 20;}
