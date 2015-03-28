@@ -39,6 +39,7 @@ const int NUM_BOXES = 3;
 const int BULLET_SPEED = 15;
 const int BGTILE_SIZE = 2000;
 const int DAWN_VEL = 4;
+const int WALL_HEIGHT = 433;
 bool ControlState = false;
 bool renderflag = false;
 bool renderflag2 = false;
@@ -515,7 +516,7 @@ class Dawn: public RenderSprite
 
         void DestroyJillBullet(int index);
 
-        bool CheckCollisionLine(CollisionLine* JillsLine);
+
 
         int GetWidth();
 
@@ -580,6 +581,9 @@ class Dawn: public RenderSprite
 
         bool PunchForward = true;
 
+        bool CheckCollisionLine(CollisionLine* JillsLine);
+
+        bool IsWallColliding = false;
 };
 
 
@@ -2105,25 +2109,37 @@ void Dawn::move()
     mPosX += mVelX;//+mVelY*0.70710678118;
     mPosY += mVelY;//*0.70710678118;
     }
+
     else if (ControlState == false){
-     if(!CheckCollisionLine(DawnsCollisionVector.at(0))){
-        if(!Dawn_Still){
-        mPosX += mVelX+mVelY*0.70710678118;
 
-        mPosY += mVelY*0.70710678118;
-        }
+    IsWallColliding = false;
+
+    for (int i = 0; i<DawnsCollisionVector.size();i++){
+            if(CheckCollisionLine(DawnsCollisionVector.at(i))){
+            IsWallColliding = true;
+
+
+
+            }
+
+            }
+
+        if(!Dawn_Still&&!IsWallColliding){
+            mPosX += mVelX+mVelY*0.70710678118;
+
+            mPosY += mVelY*0.70710678118;
+            }
         if(DawnAnim !=DAWN_PUNCH){
-        DawnAnim = DAWN_Idle;
+                DawnAnim = DAWN_Idle;
+                }
         }
 
-     }
-        else if(mVelY<0){
+        if(mVelY<0&&IsWallColliding){
 
-            DawnAnim = DAWN_PRESS_DOWN;
+                DawnAnim = DAWN_PRESS_DOWN;
         }
 
 
-    }
     //If the dot went too far to the left or right
 
     if( ( mPosX < 0 ) || ( mPosX + DAWN_WIDTH > LEVEL_WIDTH ) )
@@ -2133,22 +2149,10 @@ void Dawn::move()
     }
 
 
-    //If the dot went too far up or down
 
 
-    if( ( mPosY < 300 ) || ( mPosY + DAWN_HEIGHT > LEVEL_HEIGHT ) )
-    {
 
-    //    onGround = true;
 
-        //Move back
-        mPosY -= mVelY;
-        /*
-        mVelY = 0;
-        onGround = true;
-        mVelX = 0;
-    */
-    }
     if(InAir){
     VertVel-=GRAVITY;
     }
@@ -2457,7 +2461,7 @@ vector<BulletCoord> Dawn::GetJillBullets(){
 
 bool Dawn::CheckCollisionLine(CollisionLine* JillsLine){
 
-    if((JillsLine->GetType()==HORIZONTAL_LINE)&&(mPosX>JillsLine->GetLineCoord().mX)&&(mPosX<(JillsLine->GetLineCoord().mX+JillsLine->GetLineLength()))){
+    if((JillsLine->GetType()==HORIZONTAL_LINE)&&(mPosX+150>JillsLine->GetLineCoord().mX)&&(mPosX+70<(JillsLine->GetLineCoord().mX+JillsLine->GetLineLength()))){
 
        if((mVelY<0)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE<mPosY)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE>mPosY+mVelY*0.70710678118)){
 
@@ -2903,8 +2907,11 @@ void OcclusionTile::render(SDL_Rect camRect,float inPosX, float inPosY){
     RenderRect.y = InterSectRect.y - TileRect.y;
     RenderRect.w = InterSectRect.w;
     RenderRect.h = InterSectRect.h;
-    if((inPosY+305*DAWN_SCALE<TileRect.y+TileRect.h)&&((TileRect.x+TileRect.w)<inPosX)||(inPosY+305*DAWN_SCALE>TileRect.y+TileRect.h)){
-    // We want to display so go up
+
+    // If the following line is true.
+    // Than fade in the wall
+    if((inPosY+305*DAWN_SCALE<TileRect.y+TileRect.h)&&((TileRect.x+TileRect.w)<109*DAWN_SCALE+inPosX)||(inPosY+305*DAWN_SCALE<TileRect.y+TileRect.h-WALL_HEIGHT)&&(((inPosY+305*DAWN_SCALE)<(inPosX+109*DAWN_SCALE+TileRect.y+TileRect.h-WALL_HEIGHT-(TileRect.x+TileRect.w))))||(inPosY+305*DAWN_SCALE>TileRect.y+TileRect.h)){
+
 
      if(ThisAlpha<255){  ThisAlpha+= 20;}
      else if (ThisAlpha>255){ThisAlpha = 255;}
@@ -3304,7 +3311,7 @@ int main( int argc, char* args[] )
 
             CollisionLine  LineOne(0,2093,1620,HORIZONTAL_LINE, false);
             CollisionLine  LineTwo(390,863,1740,DIAGONAL_LINE, true);
-            CollisionLine  LineThree(390,863,1132,HORIZONTAL_LINE, true);
+            CollisionLine  LineThree(390,865,1132,HORIZONTAL_LINE, true);
             CollisionLine  LineFour(1038,375,690,DIAGONAL_LINE,true);
             CollisionLine  LineFive(1038,375,585,HORIZONTAL_LINE,true);
             CollisionLine  LineSix(1615,375,690,DIAGONAL_LINE,true);
