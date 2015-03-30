@@ -127,7 +127,10 @@ MELEE_ENEMY_IDLE,
 MELEE_ENEMY_WALK,
 MELEE_ENEMY_PUNCH,
 MELEE_ENEMY_REACT,
-DAWN_PRESS_DOWN
+DAWN_PRESS_DOWN,
+DAWN_PRESS_UP,
+DAWN_PRESS_LEFT,
+DAWN_PRESS_RIGHT
 };
 
 enum CollisionLineType{
@@ -135,7 +138,7 @@ enum CollisionLineType{
     HORIZONTAL_LINE_LOWER_STOP,
     HORIZONTAL_LINE_UPPER_STOP,
     DIAGONAL_LINE_RIGHT_STOP,
-    DIAGONAL_LINE_LEFT_STOP
+    DIAGONAL_LINE_LEFT_STOP,
 };
 
 enum CollisionType{
@@ -588,6 +591,8 @@ class Dawn: public RenderSprite
         bool CheckCollisionLine(CollisionLine* JillsLine);
 
         bool IsWallColliding = false;
+
+        CollisionLineType CurrentCollisionLine ;
 };
 
 
@@ -836,7 +841,7 @@ LTexture gTextTexture;
 const int JILL_ANIMATION_FRAMES = IDLE_FRAMES + RUN_FRAMES + JUMP_FRAMES + SHOOT_FRAMES+LIGHT_KICK_FRAMES;
 const int ENEMY_ANIMATION_FRAMES = 15;
 
-SDL_Rect gJillClips[ JILL_ANIMATION_FRAMES+1];
+SDL_Rect gJillClips[50];
 SDL_Rect gEnemyClips[ ENEMY_ANIMATION_FRAMES+1];
 
 SDL_Rect gBoxClips;
@@ -1988,9 +1993,25 @@ int Dawn::framer(){
                 */
 
             }
-            else if (DawnAnim = DAWN_PRESS_DOWN){
+
+            else if (DawnAnim == DAWN_PRESS_DOWN){
+
+                Frame = 25*ANIM_SPEED;
+
+            }
+            else if (DawnAnim == DAWN_PRESS_UP){
 
                 Frame = 24*ANIM_SPEED;
+
+            }
+            else if (DawnAnim == DAWN_PRESS_LEFT){
+
+                Frame = 26*ANIM_SPEED;
+
+            }
+            else if (DawnAnim == DAWN_PRESS_RIGHT){
+
+                Frame = 27*ANIM_SPEED;
 
             }
                       /*  else if(Frame/ANIM_SPEED>=29){
@@ -1999,6 +2020,7 @@ int Dawn::framer(){
 
               //  cout<<Frame/ANIM_SPEED<<endl;
 				return Frame;
+
 
 }
 
@@ -2138,11 +2160,25 @@ void Dawn::move()
                 }
         }
 
-        if(mVelY<0&&IsWallColliding){
+        if((CurrentCollisionLine == HORIZONTAL_LINE_LOWER_STOP) &&IsWallColliding){
 
                 DawnAnim = DAWN_PRESS_DOWN;
         }
+        if((CurrentCollisionLine == HORIZONTAL_LINE_UPPER_STOP) &&IsWallColliding){
 
+                DawnAnim = DAWN_PRESS_UP;
+        }
+        if((CurrentCollisionLine == DIAGONAL_LINE_LEFT_STOP) &&IsWallColliding){
+
+                DawnAnim = DAWN_PRESS_LEFT;
+        }
+
+        if((CurrentCollisionLine == DIAGONAL_LINE_RIGHT_STOP )&&IsWallColliding){
+
+                DawnAnim = DAWN_PRESS_RIGHT;
+        }
+
+      //  cout<<Frame/ANIM_SPEED<<" "<<CurrentCollisionLine<<endl;
 
     //If the dot went too far to the left or right
 
@@ -2175,12 +2211,12 @@ void Dawn::move()
 
 
 
-    if(((mVelX)!= 0||(mVelY)!= 0)&&!(InAir)&&DawnAnim!=DAWN_PUNCH&&DawnAnim!=DAWN_PRESS_DOWN){
+    if(((mVelX)!= 0||(mVelY)!= 0)&&!(InAir)&&DawnAnim!=DAWN_PUNCH&&DawnAnim!=DAWN_PRESS_DOWN&&DawnAnim!=DAWN_PRESS_UP&&DawnAnim!=DAWN_PRESS_RIGHT&&DawnAnim!=DAWN_PRESS_LEFT){
         DawnAnim = DAWN_WALK;
     }
     //NOTE! This function will need to be changed everytime a new animation is added.
     // I meed to figure out a more elegant way to do this.
-    else if((!InAir)&&(DawnAnim!=JILL_Shoot)&&DawnAnim!=DAWN_PUNCH&&DawnAnim!=DAWN_PRESS_DOWN){
+    else if((!InAir)&&(DawnAnim!=JILL_Shoot)&&DawnAnim!=DAWN_PUNCH&&DawnAnim!=DAWN_PRESS_DOWN&&DawnAnim!=DAWN_PRESS_UP&&DawnAnim!=DAWN_PRESS_RIGHT&&DawnAnim!=DAWN_PRESS_LEFT){
         DawnAnim = DAWN_Idle;
     }
 
@@ -2468,7 +2504,7 @@ bool Dawn::CheckCollisionLine(CollisionLine* JillsLine){
     if((JillsLine->GetType()==HORIZONTAL_LINE_LOWER_STOP)&&(mPosX+150>JillsLine->GetLineCoord().mX)&&(mPosX+70<(JillsLine->GetLineCoord().mX+JillsLine->GetLineLength()))){
 
        if((mVelY<0)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE<mPosY)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE>mPosY+mVelY*0.70710678118)){
-
+        CurrentCollisionLine = HORIZONTAL_LINE_LOWER_STOP;
     //    cout<<"Jill is crossing"<<endl<<endl;
         return true;
        }
@@ -2478,7 +2514,7 @@ bool Dawn::CheckCollisionLine(CollisionLine* JillsLine){
     if((JillsLine->GetType()==HORIZONTAL_LINE_UPPER_STOP)&&(mPosX+150>JillsLine->GetLineCoord().mX)&&(mPosX+70<(JillsLine->GetLineCoord().mX+JillsLine->GetLineLength()))){
 
        if((mVelY>0)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE>mPosY)&&(JillsLine->GetLineCoord().mY-305*DAWN_SCALE<mPosY+mVelY*0.70710678118)){
-
+       CurrentCollisionLine = HORIZONTAL_LINE_UPPER_STOP;
     //    cout<<"Jill is crossing"<<endl<<endl;
         return true;
        }
@@ -2488,7 +2524,7 @@ bool Dawn::CheckCollisionLine(CollisionLine* JillsLine){
 
        if((mVelX<0)&&(mPosY+305*DAWN_SCALE<mPosX+109*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)&&(mPosY+305*DAWN_SCALE-mVelX>mPosX+109*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)){
 
-
+        CurrentCollisionLine = DIAGONAL_LINE_RIGHT_STOP;
         return true;
 
        }
@@ -2500,7 +2536,7 @@ bool Dawn::CheckCollisionLine(CollisionLine* JillsLine){
 
        if((mVelX>0)&&(mPosY+305*DAWN_SCALE>mPosX+220*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)&&(mPosY+305*DAWN_SCALE-mVelX<mPosX+220*DAWN_SCALE+JillsLine->GetLineCoord().mY-JillsLine->GetLineCoord().mX)){
 
-
+        CurrentCollisionLine = DIAGONAL_LINE_LEFT_STOP;
         return true;
 
        }
@@ -3121,9 +3157,10 @@ bool loadMedia()
         }
     else
 	{
-    //    int Frame_Subtotal = 0;
-		//Set sprite clips
-		// This is done in an array.
+
+
+        //Dawns Idle
+
 		for(int i = 0; i<9;i++){
 		gJillClips[ i ].x =   i*FRAME_SIZE;
 		gJillClips[ i ].y =   0;
@@ -3131,31 +3168,51 @@ bool loadMedia()
 		gJillClips[ i ].h = FRAME_SIZE;
 
 		}
-		//Frame_Subtotal +=  IDLE_FRAMES;
+		//Dawn's walk cycle
 		for(int i = 9; i < 17; i++){
           gJillClips[ i ].x =   (i-9)*FRAME_SIZE;
           gJillClips[ i ].y =   FRAME_SIZE;
           gJillClips[ i ].w =  FRAME_SIZE;
           gJillClips[ i ].h = FRAME_SIZE;
 		}
+		//Dawn's punch cycle
         for(int i = 18; i <23; i++){
           gJillClips[ i ].x =   (i-18)*FRAME_SIZE;
           gJillClips[ i ].y =   2*FRAME_SIZE;
           gJillClips[ i ].w =  FRAME_SIZE;
           gJillClips[ i ].h = FRAME_SIZE;
         }
-
-          gJillClips[ 24 ].x = FRAME_SIZE;
+        //Wallpress
+      /*  for(int i = 24; i <27; i++){
+          gJillClips[ i ].x = (i-24)*FRAME_SIZE;
+          gJillClips[ i ].y =   3*FRAME_SIZE;
+          gJillClips[ i ].w =  FRAME_SIZE;
+          gJillClips[ i ].h = FRAME_SIZE;
+        }
+    */
+          gJillClips[ 24 ].x = 0;
           gJillClips[ 24 ].y =   3*FRAME_SIZE;
           gJillClips[ 24 ].w =  FRAME_SIZE;
           gJillClips[ 24 ].h = FRAME_SIZE;
 
-        for(int i = 37; i <41 ;i++){
-          gJillClips[ i ].x =   (i-37)*130;
-          gJillClips[ i ].y =   600;
-          gJillClips[ i ].w =  FRAME_SIZE+30;
-          gJillClips[ i ].h = FRAME_SIZE;
-            }
+          gJillClips[ 25 ].x = FRAME_SIZE;
+          gJillClips[ 25 ].y =   3*FRAME_SIZE;
+          gJillClips[ 25 ].w =  FRAME_SIZE;
+          gJillClips[ 25 ].h = FRAME_SIZE;
+
+          gJillClips[ 26 ].x = 2*FRAME_SIZE;
+          gJillClips[ 26 ].y =   3*FRAME_SIZE;
+          gJillClips[ 26 ].w =  FRAME_SIZE;
+          gJillClips[ 26 ].h = FRAME_SIZE;
+
+          gJillClips[ 27 ].x = 3*FRAME_SIZE;
+          gJillClips[ 27 ].y =   3*FRAME_SIZE;
+          gJillClips[ 27 ].w =  FRAME_SIZE;
+          gJillClips[ 27 ].h = FRAME_SIZE;
+        //
+
+
+
           //Define the rectangles for the Boxes
           gBoxClips.x = 0;
           gBoxClips.y = 0;
