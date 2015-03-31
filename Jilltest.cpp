@@ -130,7 +130,8 @@ MELEE_ENEMY_REACT,
 DAWN_PRESS_DOWN,
 DAWN_PRESS_UP,
 DAWN_PRESS_LEFT,
-DAWN_PRESS_RIGHT
+DAWN_PRESS_RIGHT,
+DAWN_COMBAT_IDLE
 };
 
 enum CollisionLineType{
@@ -1960,27 +1961,23 @@ int Dawn::framer(){
                         Frame =30*ANIM_SPEED;
                         }
 
-                        if(Frame/ANIM_SPEED == 36){
-                    DawnAnim = DAWN_Idle;
+                if(Frame/ANIM_SPEED == 36){
+                        DawnAnim = DAWN_Idle;
+                        }
                 }
-                }
-                    else if (DawnAnim == DAWN_PUNCH){
+                else if (DawnAnim == DAWN_PUNCH){
                         Dawn_Still = true;
                         if(PunchForward){
                             Frame++;
                         }
-                 /*       else if(!PunchForward){
-                            Frame--;
-                        }
-                */
                         if(Frame/ANIM_SPEED<18||(Frame/ANIM_SPEED)>23){
                         Frame =18*ANIM_SPEED;
                         }
 
                         if((Frame/ANIM_SPEED == 23)&&(PunchForward)){
-                        DawnAnim = DAWN_Idle;
+                        DawnAnim = DAWN_COMBAT_IDLE;
                         Dawn_Still = false;
-                        Frame = 0;
+
                         PunchForward = true;
                         }
 
@@ -2014,9 +2011,15 @@ int Dawn::framer(){
                 Frame = 27*ANIM_SPEED;
 
             }
-                      /*  else if(Frame/ANIM_SPEED>=29){
-                        land();
-                    }*/
+
+            else if(DawnAnim == DAWN_COMBAT_IDLE){
+                Frame++;
+                if(Frame/ANIM_SPEED>35||(Frame/ANIM_SPEED)<28){
+                Frame =30*ANIM_SPEED;
+                }
+
+
+            }
 
               //  cout<<Frame/ANIM_SPEED<<endl;
 				return Frame;
@@ -2155,7 +2158,7 @@ void Dawn::move()
 
             mPosY += mVelY*0.70710678118;
             }
-        if(DawnAnim !=DAWN_PUNCH){
+        if(DawnAnim !=DAWN_PUNCH&&DawnAnim!=DAWN_COMBAT_IDLE){
                 DawnAnim = DAWN_Idle;
                 }
         }
@@ -2216,9 +2219,6 @@ void Dawn::move()
     }
     //NOTE! This function will need to be changed everytime a new animation is added.
     // I meed to figure out a more elegant way to do this.
-    else if((!InAir)&&(DawnAnim!=JILL_Shoot)&&DawnAnim!=DAWN_PUNCH&&DawnAnim!=DAWN_PRESS_DOWN&&DawnAnim!=DAWN_PRESS_UP&&DawnAnim!=DAWN_PRESS_RIGHT&&DawnAnim!=DAWN_PRESS_LEFT){
-        DawnAnim = DAWN_Idle;
-    }
 
     BoxCollide();
     // Iterate the bullets
@@ -3182,36 +3182,27 @@ bool loadMedia()
           gJillClips[ i ].w =  FRAME_SIZE;
           gJillClips[ i ].h = FRAME_SIZE;
         }
-        //Wallpress
-      /*  for(int i = 24; i <27; i++){
+
+    for(int i = 24; i<28; i++){
           gJillClips[ i ].x = (i-24)*FRAME_SIZE;
           gJillClips[ i ].y =   3*FRAME_SIZE;
           gJillClips[ i ].w =  FRAME_SIZE;
           gJillClips[ i ].h = FRAME_SIZE;
-        }
-    */
-          gJillClips[ 24 ].x = 0;
-          gJillClips[ 24 ].y =   3*FRAME_SIZE;
-          gJillClips[ 24 ].w =  FRAME_SIZE;
-          gJillClips[ 24 ].h = FRAME_SIZE;
+	}
 
-          gJillClips[ 25 ].x = FRAME_SIZE;
-          gJillClips[ 25 ].y =   3*FRAME_SIZE;
-          gJillClips[ 25 ].w =  FRAME_SIZE;
-          gJillClips[ 25 ].h = FRAME_SIZE;
+    for(int i = 28; i<36; i++){
+          gJillClips[ i ].x = (i-28)*FRAME_SIZE;
+          gJillClips[ i ].y =   4*FRAME_SIZE;
+          gJillClips[ i ].w =  FRAME_SIZE;
+          gJillClips[ i ].h = FRAME_SIZE;
+	}
 
-          gJillClips[ 26 ].x = 2*FRAME_SIZE;
-          gJillClips[ 26 ].y =   3*FRAME_SIZE;
-          gJillClips[ 26 ].w =  FRAME_SIZE;
-          gJillClips[ 26 ].h = FRAME_SIZE;
-
-          gJillClips[ 27 ].x = 3*FRAME_SIZE;
-          gJillClips[ 27 ].y =   3*FRAME_SIZE;
-          gJillClips[ 27 ].w =  FRAME_SIZE;
-          gJillClips[ 27 ].h = FRAME_SIZE;
-        //
-
-
+    for(int i = 37; i<38; i++){
+          gJillClips[ i ].x = (24-i)*FRAME_SIZE;
+          gJillClips[ i ].y =   3*FRAME_SIZE;
+          gJillClips[ i ].w =  FRAME_SIZE;
+          gJillClips[ i ].h = FRAME_SIZE;
+	}
 
           //Define the rectangles for the Boxes
           gBoxClips.x = 0;
