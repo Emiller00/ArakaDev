@@ -594,6 +594,10 @@ class Dawn: public RenderSprite
         bool IsWallColliding = false;
 
         CollisionLineType CurrentCollisionLine ;
+
+        int AnimOffsetX = 0;
+
+        int AnimOffsetY = 0;
 };
 
 
@@ -842,7 +846,7 @@ LTexture gTextTexture;
 const int JILL_ANIMATION_FRAMES = IDLE_FRAMES + RUN_FRAMES + JUMP_FRAMES + SHOOT_FRAMES+LIGHT_KICK_FRAMES;
 const int ENEMY_ANIMATION_FRAMES = 15;
 
-SDL_Rect gJillClips[50];
+SDL_Rect gDawnClips[50];
 SDL_Rect gEnemyClips[ ENEMY_ANIMATION_FRAMES+1];
 
 SDL_Rect gBoxClips;
@@ -1934,7 +1938,7 @@ int Dawn::framer(){
                 // This function determines how to animate Jill
                 // If  you want to set the location of the animation
                 // You must use the location* anim_speed
-
+                AnimOffsetX = AnimOffsetY = 0;
 
                 if(DawnAnim == DAWN_WALK){
                 Frame ++;
@@ -2013,6 +2017,7 @@ int Dawn::framer(){
             }
 
             else if(DawnAnim == DAWN_COMBAT_IDLE){
+                AnimOffsetX = 50;
                 Frame++;
                 if(Frame/ANIM_SPEED>35||(Frame/ANIM_SPEED)<28){
                 Frame =30*ANIM_SPEED;
@@ -2053,7 +2058,7 @@ void Dawn::DetectHit(vector<SDL_Rect> InRect, float InPosY){
 
 void Dawn::Logic(){
       //create a bullet once the animation shows Jill Shooting
-      if(Frame == 34*ANIM_SPEED ){
+      if(Frame == 900*ANIM_SPEED ){
 
        // anim_indicator = true;
        if(!IsFlipped){
@@ -2264,15 +2269,7 @@ void Dawn::render()
 
     // Set the Render Distance. This Takes into account the vertical offset (from jumping)
     int rendY = mPosY - VertDis - CposY;
-    //this is a correction for the light kick animation
-    int XOffset = 0;
 
-    if(DawnAnim == JILL_LIGHT_KICK && IsFlipped == true){
-        XOffset = 43;
-    }
-    else{
-        XOffset = 0;
-    }
 
 
 //blinker is a boolean that goes on and off
@@ -2294,11 +2291,11 @@ if(blinker){
             gKunoTexture.render( mPosX - CposX, mPosY - CposY,JILL_SCALE, clip );
             }
             else{  */
-            gJillTexture.render( mPosX - CposX, rendY,DAWN_SCALE, Anim_Rect );
+            gJillTexture.render( mPosX - CposX+AnimOffsetX, rendY,DAWN_SCALE, Anim_Rect );
 
     }
     else if(IsFlipped == true){
-    gJillTexture.render( mPosX - CposX-XOffset, rendY,DAWN_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
+    gJillTexture.render( mPosX - CposX-AnimOffsetX, rendY,DAWN_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
     }
 
 
@@ -3162,46 +3159,48 @@ bool loadMedia()
         //Dawns Idle
 
 		for(int i = 0; i<9;i++){
-		gJillClips[ i ].x =   i*FRAME_SIZE;
-		gJillClips[ i ].y =   0;
-		gJillClips[ i ].w =  FRAME_SIZE;
-		gJillClips[ i ].h = FRAME_SIZE;
+		gDawnClips[ i ].x =   i*FRAME_SIZE;
+		gDawnClips[ i ].y =   0;
+		gDawnClips[ i ].w =  FRAME_SIZE;
+		gDawnClips[ i ].h = FRAME_SIZE;
 
 		}
 		//Dawn's walk cycle
 		for(int i = 9; i < 17; i++){
-          gJillClips[ i ].x =   (i-9)*FRAME_SIZE;
-          gJillClips[ i ].y =   FRAME_SIZE;
-          gJillClips[ i ].w =  FRAME_SIZE;
-          gJillClips[ i ].h = FRAME_SIZE;
+          gDawnClips[ i ].x =   (i-9)*FRAME_SIZE;
+          gDawnClips[ i ].y =   FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
 		}
 		//Dawn's punch cycle
         for(int i = 18; i <23; i++){
-          gJillClips[ i ].x =   (i-18)*FRAME_SIZE;
-          gJillClips[ i ].y =   2*FRAME_SIZE;
-          gJillClips[ i ].w =  FRAME_SIZE;
-          gJillClips[ i ].h = FRAME_SIZE;
+          gDawnClips[ i ].x =   (i-18)*FRAME_SIZE;
+          gDawnClips[ i ].y =   2*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
         }
-
+        //Wall Presses
     for(int i = 24; i<28; i++){
-          gJillClips[ i ].x = (i-24)*FRAME_SIZE;
-          gJillClips[ i ].y =   3*FRAME_SIZE;
-          gJillClips[ i ].w =  FRAME_SIZE;
-          gJillClips[ i ].h = FRAME_SIZE;
+          gDawnClips[ i ].x = (i-24)*FRAME_SIZE;
+          gDawnClips[ i ].y =   3*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+        }
+        // CombatIdle
+    for(int i = 28; i<36; i++){
+          gDawnClips[ i ].x = (i-28)*FRAME_SIZE;
+          gDawnClips[ i ].y =   4*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
 	}
 
-    for(int i = 28; i<36; i++){
-          gJillClips[ i ].x = (i-28)*FRAME_SIZE;
-          gJillClips[ i ].y =   4*FRAME_SIZE;
-          gJillClips[ i ].w =  FRAME_SIZE;
-          gJillClips[ i ].h = FRAME_SIZE;
-	}
+    //Dawn Block
 
     for(int i = 37; i<38; i++){
-          gJillClips[ i ].x = (24-i)*FRAME_SIZE;
-          gJillClips[ i ].y =   3*FRAME_SIZE;
-          gJillClips[ i ].w =  FRAME_SIZE;
-          gJillClips[ i ].h = FRAME_SIZE;
+          gDawnClips[ i ].x = (24-i)*FRAME_SIZE;
+          gDawnClips[ i ].y =   3*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
 	}
 
           //Define the rectangles for the Boxes
@@ -3536,7 +3535,7 @@ int main( int argc, char* args[] )
 
 
 
-                jill.SetCam(camera.x, camera.y, &gJillClips[jill.framer()/ANIM_SPEED]);
+                jill.SetCam(camera.x, camera.y, &gDawnClips[jill.framer()/ANIM_SPEED]);
                 Box1.SetCam(camera.x, camera.y);
                 Box2.SetCam(camera.x, camera.y);
                 Box3.SetCam(camera.x, camera.y);
