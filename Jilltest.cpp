@@ -38,7 +38,8 @@ const int JUMP_SPEED = 20;
 const int NUM_BOXES = 3;
 const int BULLET_SPEED = 15;
 const int BGTILE_SIZE = 2000;
-const int DAWN_VEL = 4;
+const int DAWN_WALK_VEL = 4;
+const int DAWN_BATTLE_VEL = 2;
 const int WALL_HEIGHT = 433;
 bool ControlState = false;
 bool renderflag = false;
@@ -131,7 +132,8 @@ DAWN_PRESS_DOWN,
 DAWN_PRESS_UP,
 DAWN_PRESS_LEFT,
 DAWN_PRESS_RIGHT,
-DAWN_COMBAT_IDLE
+DAWN_COMBAT_IDLE,
+DAWN_BLOCK
 };
 
 enum CollisionLineType{
@@ -503,7 +505,7 @@ class Dawn: public RenderSprite
         //		getPosXString()
 
         //Set the Cameras
-        void SetCam(float cXpos, float cYpos, SDL_Rect* InputRect);
+        void SetCam(float cXpos, float cYpos);
 
 
 
@@ -559,7 +561,7 @@ class Dawn: public RenderSprite
 		// Collision Detection
 		SDL_Rect mCollider;
 
-        SDL_Rect* Anim_Rect;
+        SDL_Rect *Anim_Rect;
 		// The animation frame
 		int Frame;
 
@@ -598,6 +600,21 @@ class Dawn: public RenderSprite
         int AnimOffsetX = 0;
 
         int AnimOffsetY = 0;
+
+        bool BattleStance = true;
+
+        int DAWN_VEL = DAWN_WALK_VEL;
+
+        bool IsHit = false;
+
+        int HitCounter = 0;
+
+        int ThisFrame = 0;
+
+        SDL_Rect gDawnClips[50];
+
+
+
 };
 
 
@@ -762,7 +779,7 @@ public:
 		// Collision Detection
 		SDL_Rect mCollider;
 
-        SDL_Rect Anim_Rect;
+        SDL_Rect *Anim_Rect;
 		// The animation frame
 		int ReturnFrame = 0;
 		int  Frame =0;
@@ -846,7 +863,7 @@ LTexture gTextTexture;
 const int JILL_ANIMATION_FRAMES = IDLE_FRAMES + RUN_FRAMES + JUMP_FRAMES + SHOOT_FRAMES+LIGHT_KICK_FRAMES;
 const int ENEMY_ANIMATION_FRAMES = 15;
 
-SDL_Rect gDawnClips[50];
+
 SDL_Rect gEnemyClips[ ENEMY_ANIMATION_FRAMES+1];
 
 SDL_Rect gBoxClips;
@@ -1220,11 +1237,11 @@ void MeleeEnemy::render()
 
     if(IsFlipped == false){
 
-    gMeleeEnemyTexture.render( mPosX - CposX-OffSetArray[ThisFrame], rendY,ENEMY_SCALE, &Anim_Rect );
+    gMeleeEnemyTexture.render( mPosX - CposX-OffSetArray[ThisFrame], rendY,ENEMY_SCALE, Anim_Rect );
 
     }
     else if(IsFlipped == true){
-    gMeleeEnemyTexture.render( mPosX - CposX-OffSetArrayFlipped[ThisFrame], rendY,ENEMY_SCALE, &Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
+    gMeleeEnemyTexture.render( mPosX - CposX-OffSetArrayFlipped[ThisFrame], rendY,ENEMY_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
 
     }
     if(HitBoxFlag){
@@ -1300,7 +1317,7 @@ void MeleeEnemy::SetCam( float cXpos, float cYpos){
     CposX = cXpos;
     CposY = cYpos;
     ThisFrame = Framer();
-    Anim_Rect = gMeleeEnemyClips[ThisFrame];
+    Anim_Rect = &gMeleeEnemyClips[ThisFrame];
     blinker = !blinker;
 
 }
@@ -1932,6 +1949,54 @@ Dawn::Dawn()
 
     DawnHitBoxes = CollisionBoxArray("DawnHitInput.txt");
     DawnAttackBoxes = CollisionBoxArray("DawnAttackInput.txt");
+
+
+        //Dawns Idle
+
+		for(int i = 0; i<9;i++){
+		gDawnClips[ i ].x =   i*FRAME_SIZE;
+		gDawnClips[ i ].y =   0;
+		gDawnClips[ i ].w =  FRAME_SIZE;
+		gDawnClips[ i ].h = FRAME_SIZE;
+
+		}
+		//Dawn's walk cycle
+		for(int i = 9; i < 17; i++){
+          gDawnClips[ i ].x =   (i-9)*FRAME_SIZE;
+          gDawnClips[ i ].y =   FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+		}
+		//Dawn's punch cycle
+        for(int i = 18; i <23; i++){
+          gDawnClips[ i ].x =   (i-18)*FRAME_SIZE;
+          gDawnClips[ i ].y =   2*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+        }
+        //Wall Presses
+        for(int i = 24; i<28; i++){
+          gDawnClips[ i ].x = (i-24)*FRAME_SIZE;
+          gDawnClips[ i ].y =   3*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+        }
+        // CombatIdle
+        for(int i = 28; i<36; i++){
+          gDawnClips[ i ].x = (i-28)*FRAME_SIZE;
+          gDawnClips[ i ].y =   4*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+        }
+
+        //Dawn Block
+
+        for(int i = 36; i<38; i++){
+          gDawnClips[ i ].x = (i-36)*FRAME_SIZE;
+          gDawnClips[ i ].y =   5*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+        }
 }
 
 int Dawn::framer(){
@@ -1945,6 +2010,7 @@ int Dawn::framer(){
                 if(Frame/ANIM_SPEED>16||(Frame/ANIM_SPEED)<9){
                     Frame =9*ANIM_SPEED;
                     }
+                    return Frame/ANIM_SPEED;
 				}
 				else if(DawnAnim == DAWN_Idle){
                     Frame++;
@@ -1952,22 +2018,26 @@ int Dawn::framer(){
                     if(Frame/ANIM_SPEED>8){
                         Frame = 0;
                     }
+                    return Frame/ANIM_SPEED;
 				}
 				else if(DawnAnim == Jill_Jump){
                     Frame++;
                     if((Frame/ANIM_SPEED)<18){
                     Frame =18*ANIM_SPEED;
                     }
+                    return Frame/ANIM_SPEED;
 				}
                 else if (DawnAnim == JILL_Shoot){
                         Frame++;
                         if(Frame/ANIM_SPEED>37||(Frame/ANIM_SPEED)<30){
                         Frame =30*ANIM_SPEED;
+
                         }
 
                 if(Frame/ANIM_SPEED == 36){
                         DawnAnim = DAWN_Idle;
                         }
+                        return Frame/ANIM_SPEED;
                 }
                 else if (DawnAnim == DAWN_PUNCH){
                         Dawn_Still = true;
@@ -1980,6 +2050,7 @@ int Dawn::framer(){
 
                         if((Frame/ANIM_SPEED == 23)&&(PunchForward)){
                         DawnAnim = DAWN_COMBAT_IDLE;
+                        BattleStance = true;
                         Dawn_Still = false;
 
                         PunchForward = true;
@@ -1992,28 +2063,34 @@ int Dawn::framer(){
                         PunchForward = true;
                         }
                 */
-
+                        return Frame/ANIM_SPEED;
             }
 
             else if (DawnAnim == DAWN_PRESS_DOWN){
 
                 Frame = 25*ANIM_SPEED;
 
+                return Frame/ANIM_SPEED;
+
             }
             else if (DawnAnim == DAWN_PRESS_UP){
 
                 Frame = 24*ANIM_SPEED;
+
+                return Frame/ANIM_SPEED;
 
             }
             else if (DawnAnim == DAWN_PRESS_LEFT){
 
                 Frame = 26*ANIM_SPEED;
 
+                return Frame/ANIM_SPEED;
             }
             else if (DawnAnim == DAWN_PRESS_RIGHT){
 
                 Frame = 27*ANIM_SPEED;
 
+                return Frame/ANIM_SPEED;
             }
 
             else if(DawnAnim == DAWN_COMBAT_IDLE){
@@ -2023,11 +2100,28 @@ int Dawn::framer(){
                 Frame =30*ANIM_SPEED;
                 }
 
+                return Frame/ANIM_SPEED;
 
             }
+            else if(DawnAnim == DAWN_BLOCK){
 
+                Frame++;
+                if(Frame/ANIM_SPEED>37||(Frame/ANIM_SPEED)<36){
+                Frame =36*ANIM_SPEED;
+                }
+                if(Frame/ANIM_SPEED==37){
+                    if(BattleStance){
+                        DawnAnim = DAWN_COMBAT_IDLE;
+                    }
+                    else{
+                        DawnAnim = DAWN_Idle;
+                    }
+                }
+
+                    return Frame/ANIM_SPEED;
+            }
               //  cout<<Frame/ANIM_SPEED<<endl;
-				return Frame;
+
 
 
 }
@@ -2043,7 +2137,8 @@ void Dawn::DetectHit(vector<SDL_Rect> InRect, float InPosY){
     TempRect2 = GetHitBoxes().at(0);
             if(  SDL_IntersectRect(&TempRect2,&TempRect1,&TempRect)){
 
-                renderflag = true;
+                DawnAnim = DAWN_BLOCK;
+
 
                // cout<<"Dawn was hit"<<endl;
     }
@@ -2104,11 +2199,20 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
         {
             case SDLK_UP: mVelY -= DAWN_VEL; break;
             case SDLK_DOWN: mVelY += DAWN_VEL; break;
-            case SDLK_LEFT: mVelX -= DAWN_VEL;if(mVelX<=0){IsFlipped = true;}   break;
-            case SDLK_RIGHT: mVelX += DAWN_VEL; if(mVelX>=0){IsFlipped = false;}  break;
+            case SDLK_LEFT: mVelX -= DAWN_VEL;if(mVelX<=0&&!BattleStance){IsFlipped = true;}   break;
+            case SDLK_RIGHT: mVelX += DAWN_VEL; if(mVelX>=0&&!BattleStance){IsFlipped = false;}  break;
    //         case SDLK_SPACE: if(JillAnim != Jill_Jump){JillAnim = Jill_Jump; VertVel = JUMP_SPEED; InAir = true;} break;
    //         case SDLK_s: if (JillAnim != JILL_Shoot){JillAnim = JILL_Shoot;} break;
             case SDLK_d: if (DawnAnim != DAWN_PUNCH){DawnAnim = DAWN_PUNCH;} break;
+            case SDLK_f:
+                        BattleStance = !BattleStance;
+                        if(!IsFlipped &&(mVelX<0)){
+                            IsFlipped = !IsFlipped;
+                        }
+                        if(IsFlipped &&(mVelX>0)){
+                            IsFlipped = !IsFlipped;
+                        }
+                         break;
         }
 
     }
@@ -2137,7 +2241,7 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
 
 void Dawn::move()
 {
-
+    if(DawnAnim != DAWN_BLOCK){
     //Move the dot left or right
     if(ControlState == true){
     mPosX += mVelX;//+mVelY*0.70710678118;
@@ -2163,11 +2267,15 @@ void Dawn::move()
 
             mPosY += mVelY*0.70710678118;
             }
-        if(DawnAnim !=DAWN_PUNCH&&DawnAnim!=DAWN_COMBAT_IDLE){
+    }
+        if(DawnAnim !=DAWN_PUNCH&&!BattleStance){
                 DawnAnim = DAWN_Idle;
-                }
         }
 
+        if(DawnAnim !=DAWN_PUNCH&&BattleStance){
+                DawnAnim = DAWN_COMBAT_IDLE;
+        }
+        if(!BattleStance){
         if((CurrentCollisionLine == HORIZONTAL_LINE_LOWER_STOP) &&IsWallColliding){
 
                 DawnAnim = DAWN_PRESS_DOWN;
@@ -2185,7 +2293,7 @@ void Dawn::move()
 
                 DawnAnim = DAWN_PRESS_RIGHT;
         }
-
+        }
       //  cout<<Frame/ANIM_SPEED<<" "<<CurrentCollisionLine<<endl;
 
     //If the dot went too far to the left or right
@@ -2226,6 +2334,8 @@ void Dawn::move()
     // I meed to figure out a more elegant way to do this.
 
     BoxCollide();
+    }
+
     // Iterate the bullets
     for(int i = 0; i<JillBullets.NumBullets(); i++){
         if(JillBullets.GetBullet(i).flipped == false){
@@ -2266,6 +2376,7 @@ int Dawn::GetWidth(){
 }
 void Dawn::render()
 {
+
 
     // Set the Render Distance. This Takes into account the vertical offset (from jumping)
     int rendY = mPosY - VertDis - CposY;
@@ -2403,11 +2514,12 @@ void Dawn::land(){
 
 }
 
-void Dawn::SetCam( float cXpos, float cYpos, SDL_Rect* InputRect){
+void Dawn::SetCam( float cXpos, float cYpos){
 
     CposX = cXpos;
     CposY = cYpos;
-    Anim_Rect = InputRect;
+    ThisFrame = framer();
+    Anim_Rect = &gDawnClips[ThisFrame];
 
 }
 
@@ -3156,52 +3268,6 @@ bool loadMedia()
 	{
 
 
-        //Dawns Idle
-
-		for(int i = 0; i<9;i++){
-		gDawnClips[ i ].x =   i*FRAME_SIZE;
-		gDawnClips[ i ].y =   0;
-		gDawnClips[ i ].w =  FRAME_SIZE;
-		gDawnClips[ i ].h = FRAME_SIZE;
-
-		}
-		//Dawn's walk cycle
-		for(int i = 9; i < 17; i++){
-          gDawnClips[ i ].x =   (i-9)*FRAME_SIZE;
-          gDawnClips[ i ].y =   FRAME_SIZE;
-          gDawnClips[ i ].w =  FRAME_SIZE;
-          gDawnClips[ i ].h = FRAME_SIZE;
-		}
-		//Dawn's punch cycle
-        for(int i = 18; i <23; i++){
-          gDawnClips[ i ].x =   (i-18)*FRAME_SIZE;
-          gDawnClips[ i ].y =   2*FRAME_SIZE;
-          gDawnClips[ i ].w =  FRAME_SIZE;
-          gDawnClips[ i ].h = FRAME_SIZE;
-        }
-        //Wall Presses
-    for(int i = 24; i<28; i++){
-          gDawnClips[ i ].x = (i-24)*FRAME_SIZE;
-          gDawnClips[ i ].y =   3*FRAME_SIZE;
-          gDawnClips[ i ].w =  FRAME_SIZE;
-          gDawnClips[ i ].h = FRAME_SIZE;
-        }
-        // CombatIdle
-    for(int i = 28; i<36; i++){
-          gDawnClips[ i ].x = (i-28)*FRAME_SIZE;
-          gDawnClips[ i ].y =   4*FRAME_SIZE;
-          gDawnClips[ i ].w =  FRAME_SIZE;
-          gDawnClips[ i ].h = FRAME_SIZE;
-	}
-
-    //Dawn Block
-
-    for(int i = 37; i<38; i++){
-          gDawnClips[ i ].x = (24-i)*FRAME_SIZE;
-          gDawnClips[ i ].y =   3*FRAME_SIZE;
-          gDawnClips[ i ].w =  FRAME_SIZE;
-          gDawnClips[ i ].h = FRAME_SIZE;
-	}
 
           //Define the rectangles for the Boxes
           gBoxClips.x = 0;
@@ -3535,7 +3601,7 @@ int main( int argc, char* args[] )
 
 
 
-                jill.SetCam(camera.x, camera.y, &gDawnClips[jill.framer()/ANIM_SPEED]);
+                jill.SetCam(camera.x, camera.y);
                 Box1.SetCam(camera.x, camera.y);
                 Box2.SetCam(camera.x, camera.y);
                 Box3.SetCam(camera.x, camera.y);
