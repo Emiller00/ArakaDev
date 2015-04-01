@@ -34,6 +34,7 @@ const float GRAVITY = 1;
 const int FRAME_SIZE = 335;
 const int ANIM_SPEED = 5;
 const int ANIM_SPEED2 = 6;
+const int ANIM_SPEED3 = 6;
 const int JUMP_SPEED = 20;
 const int NUM_BOXES = 3;
 const int BULLET_SPEED = 15;
@@ -532,6 +533,10 @@ class Dawn: public RenderSprite
 
         void DetectHit(vector<SDL_Rect> InRect, float InPosY);
 
+        void MoveTrue();
+
+        void MoveFalse();
+
         private:
 
 		/*
@@ -601,7 +606,7 @@ class Dawn: public RenderSprite
 
         int AnimOffsetY = 0;
 
-        bool BattleStance = true;
+        bool BattleStance = false;
 
         int DAWN_VEL = DAWN_WALK_VEL;
 
@@ -613,6 +618,12 @@ class Dawn: public RenderSprite
 
         SDL_Rect gDawnClips[50];
 
+        bool IsMoving = false;
+
+        bool IsMovingUP = false;
+        bool IsMovingDOWN = false;
+        bool IsMovingRIGHT = false;
+        bool IsMovingLEFT = false;
 
 
 };
@@ -2050,7 +2061,7 @@ int Dawn::framer(){
 
                         if((Frame/ANIM_SPEED == 23)&&(PunchForward)){
                         DawnAnim = DAWN_COMBAT_IDLE;
-                        BattleStance = true;
+                        BattleStance = false;
                         Dawn_Still = false;
 
                         PunchForward = true;
@@ -2106,15 +2117,17 @@ int Dawn::framer(){
             else if(DawnAnim == DAWN_BLOCK){
 
                 Frame++;
-                if(Frame/ANIM_SPEED>37||(Frame/ANIM_SPEED)<36){
+                if(ThisFrame>37||(ThisFrame)<36){
                 Frame =36*ANIM_SPEED;
                 }
-                if(Frame/ANIM_SPEED==37){
+                if(ThisFrame==37){
                     if(BattleStance){
                         DawnAnim = DAWN_COMBAT_IDLE;
+
                     }
                     else{
                         DawnAnim = DAWN_Idle;
+
                     }
                 }
 
@@ -2191,16 +2204,18 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
 
 
     //If a key was pressed
-
+/*
 	if( e.type == SDL_KEYDOWN && e.key.repeat == 0)
     {
+
         //Adjust the velocity
         switch( e.key.keysym.sym )
         {
-            case SDLK_UP: mVelY -= DAWN_VEL; break;
-            case SDLK_DOWN: mVelY += DAWN_VEL; break;
-            case SDLK_LEFT: mVelX -= DAWN_VEL;if(mVelX<=0&&!BattleStance){IsFlipped = true;}   break;
-            case SDLK_RIGHT: mVelX += DAWN_VEL; if(mVelX>=0&&!BattleStance){IsFlipped = false;}  break;
+
+            case SDLK_UP:if(!IsMoving){ mVelY -= DAWN_VEL; IsMoving = IsMovingUP = true;} break;
+            case SDLK_DOWN:if(!IsMoving){ mVelY += DAWN_VEL;IsMoving = IsMovingDOWN = true;} break;
+            case SDLK_LEFT:if(!IsMoving){ mVelX -= DAWN_VEL;if(mVelX<=0&&!BattleStance){IsFlipped = true;} IsMoving = IsMovingLEFT = true;}  break;
+            case SDLK_RIGHT:if(!IsMoving){ mVelX += DAWN_VEL; if(mVelX>=0&&!BattleStance){IsFlipped = false;} IsMoving = IsMovingRIGHT = true;} break;
    //         case SDLK_SPACE: if(JillAnim != Jill_Jump){JillAnim = Jill_Jump; VertVel = JUMP_SPEED; InAir = true;} break;
    //         case SDLK_s: if (JillAnim != JILL_Shoot){JillAnim = JILL_Shoot;} break;
             case SDLK_d: if (DawnAnim != DAWN_PUNCH){DawnAnim = DAWN_PUNCH;} break;
@@ -2227,22 +2242,106 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
         switch( e.key.keysym.sym )
         {
 
-            case SDLK_UP: mVelY += DAWN_VEL; break;
-            case SDLK_DOWN: mVelY -= DAWN_VEL; break;
-            case SDLK_LEFT: mVelX += DAWN_VEL; break;
-            case SDLK_RIGHT: mVelX -= DAWN_VEL; break;
+            case SDLK_UP:if(IsMovingUP){ mVelY += DAWN_VEL;IsMoving = IsMovingUP = false;} break;
+            case SDLK_DOWN:if(IsMovingDOWN){ mVelY -= DAWN_VEL;IsMoving = IsMovingDOWN = false;} break;
+            case SDLK_LEFT:if(IsMovingLEFT){ mVelX += DAWN_VEL; IsMoving = IsMovingLEFT = false; }break;
+            case SDLK_RIGHT:if(IsMovingRIGHT){ mVelX -= DAWN_VEL;IsMoving = IsMovingRIGHT = false; }break;
 
 
         }
     //}
     }
+*/
 
+	if( e.type == SDL_KEYDOWN && e.key.repeat == 0)
+    {
+
+        //Adjust the velocity
+        switch( e.key.keysym.sym )
+        {
+
+            case SDLK_UP:
+
+                 mVelX = mVelY = 0;
+                 mVelY -= DAWN_VEL;
+
+
+
+                 break;
+            case SDLK_DOWN:
+
+                 mVelX = mVelY = 0;
+                        mVelY += DAWN_VEL;
+
+                 break;
+            case SDLK_LEFT:
+
+                 mVelX = mVelY = 0;
+                        mVelX -= DAWN_VEL;
+                        if(mVelX<=0&&!BattleStance){
+                                IsFlipped = true;
+                        }
+
+                          break;
+            case SDLK_RIGHT:
+
+                 mVelX = mVelY = 0;
+                        mVelX += DAWN_VEL;
+                        if(mVelX>=0&&!BattleStance){
+                            IsFlipped = false;
+                            }
+
+                break;
+   //         case SDLK_SPACE: if(JillAnim != Jill_Jump){JillAnim = Jill_Jump; VertVel = JUMP_SPEED; InAir = true;} break;
+   //         case SDLK_s: if (JillAnim != JILL_Shoot){JillAnim = JILL_Shoot;} break;
+            case SDLK_d: if (DawnAnim != DAWN_PUNCH){DawnAnim = DAWN_PUNCH;} break;
+            case SDLK_f:
+                        if(mVelX != DAWN_VEL &&mVelY != DAWN_VEL){
+                        BattleStance = !BattleStance;
+                        if(!IsFlipped &&(mVelX<0)){
+                            IsFlipped = !IsFlipped;
+                        }
+                        if(IsFlipped &&(mVelX>0)){
+                            IsFlipped = !IsFlipped;
+                        }
+                        }
+                         break;
+        }
+
+    }
+
+
+    //If a key was released
+
+
+    if( e.type == SDL_KEYUP && e.key.repeat == 0 )
+    {
+        //Adjust the velocity
+        switch( e.key.keysym.sym )
+        {
+
+            case SDLK_UP:if(mVelY == -DAWN_VEL){ mVelY += DAWN_VEL;IsMoving = IsMovingUP = false;} break;
+            case SDLK_DOWN:if(mVelY == DAWN_VEL){ mVelY -= DAWN_VEL;IsMoving = IsMovingDOWN = false;} break;
+            case SDLK_LEFT:if( mVelX == -DAWN_VEL){ mVelX += DAWN_VEL; IsMoving = IsMovingLEFT = false; }break;
+            case SDLK_RIGHT:if(mVelX ==DAWN_VEL){ mVelX -= DAWN_VEL;IsMoving = IsMovingRIGHT = false; }break;
+
+
+        }
+    //}
+    }
 }
 
 void Dawn::move()
 {
+    /*
+    if(BattleStance){
+        DAWN_VEL = DAWN_BATTLE_VEL;
+    }
+    else{
+        DAWN_VEL = DAWN_WALK_VEL;
+    }*/
     if(DawnAnim != DAWN_BLOCK){
-    //Move the dot left or right
+    //Move the dfot left or right
     if(ControlState == true){
     mPosX += mVelX;//+mVelY*0.70710678118;
     mPosY += mVelY;//*0.70710678118;
@@ -2433,7 +2532,17 @@ if(blinker){
 
 
 }
+void Dawn::MoveFalse(){
 
+            IsMoving = false;
+
+}
+
+void Dawn::MoveTrue(){
+
+            IsMoving = true;
+
+}
 void Dawn::HitBoxRender(){
       int ScreenPosX = mPosX-CposX;
       int ScreenPosY = mPosY-CposY;
@@ -3512,6 +3621,9 @@ int main( int argc, char* args[] )
 			//While application is running
 			while( !quit )
 			{
+
+            const Uint8* currentKeyStates = SDL_GetKeyboardState( NULL );
+
 				//Handle events on queue
 				while( SDL_PollEvent( &e ) != 0 )
 				{
@@ -3529,7 +3641,7 @@ int main( int argc, char* args[] )
                         debug = !debug;
 
 						}
-							if(  e.key.keysym.sym == SDLK_f && SDL_GetModState() & KMOD_CTRL )
+							if(  e.key.keysym.sym == SDLK_q && SDL_GetModState() & KMOD_CTRL )
 						{
 
                         ControlState = !ControlState;
@@ -3557,6 +3669,9 @@ int main( int argc, char* args[] )
 					jill.handleEvent( e, currentKeyStates );
 				}
 
+
+
+
 				//Move the dot
 				jill.move();
 				jill.Logic();
@@ -3575,6 +3690,7 @@ int main( int argc, char* args[] )
 
                 enemy2.DetectHit(jill.GetAttackBoxes(),jill.getPosY());
                 jill.DetectHit(enemy2.GetAttackBoxes(),enemy2.getPosY());
+
                 //Center the camera over the dot
 				camera.x = ( jill.getPosX() + jill.GetWidth() / 2 ) - SCREEN_WIDTH / 2;
 				camera.y = ( jill.getPosY() + jill.GetWidth()/ 2 ) - SCREEN_HEIGHT / 2;
