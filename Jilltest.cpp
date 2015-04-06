@@ -134,7 +134,8 @@ DAWN_PRESS_UP,
 DAWN_PRESS_LEFT,
 DAWN_PRESS_RIGHT,
 DAWN_COMBAT_IDLE,
-DAWN_BLOCK
+DAWN_BLOCK,
+DAWN_DAMAGE
 };
 
 enum CollisionLineType{
@@ -616,7 +617,7 @@ class Dawn: public RenderSprite
 
         int ThisFrame = 0;
 
-        SDL_Rect gDawnClips[50];
+        SDL_Rect gDawnClips[60];
 
         bool IsMoving = false;
 
@@ -1055,28 +1056,28 @@ void LBGTile::render(float scaler, SDL_Rect* clip ,SDL_Rect* InputScreen , doubl
     SDL_Rect renderQuad;
     int ScreenX = InputScreen->x;
     int ScreenY = InputScreen->y;
-   // cout<<BGRect.x<<" "<<BGRect.y<<" "<<ScreenX<<" "<<ScreenY<<" ";
+
 	if(((BGRect.x -ScreenX)<=0 )&&((BGRect.y - ScreenY)<=0))
     {
         renderQuad = { 0, 0, mWidth, mHeight };
-   // cout<<"Render1";
+
 
     }
     else if(((BGRect.x -ScreenX)<=0 )&&((BGRect.y - ScreenY)>0))
     {
         renderQuad = { 0, BGRect.y - ScreenY, mWidth, mHeight };
-   //       cout<<"Render2";
+
 
     }
     else if(((BGRect.x -ScreenX)>0 )&&((BGRect.y - ScreenY)<=0))
     {
         renderQuad = { BGRect.x -ScreenX, 0, mWidth, mHeight };
-    //      cout<<"Render3";
+
 
     }
 	else{
         renderQuad = { BGRect.x -ScreenX, BGRect.y - ScreenY, mWidth, mHeight };
-      //    cout<<"Render4";
+
 	}
 
 	//Set clip rendering dimensions
@@ -1407,7 +1408,7 @@ void MeleeEnemy::HitBoxRender(){
 
       }
       SDL_Rect fillRect = { BoxX, BoxY-VertDis, BoxW, BoxH};
-    //  cout<<"Enemy's Rect"<<fillRect.x<<" "<<fillRect.y<<" "<<fillRect.w<<" "<<fillRect.h<<" "<<endl;
+
       SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
       SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0x00, 0x7D );
 
@@ -1449,12 +1450,12 @@ bool MeleeEnemy::CloseDistanceY(int threshold,int InPosY){
                     if(InPosY>mPosY+20+threshold)  {
                                             Move_State = AI_Walk_Down;
                                                     return false;
-                                                     cout<<" ClosingY ";
+
                                                     }
                     else if(InPosY<mPosY+20-threshold) {
                                                 Move_State = AI_Walk_Up;
                                                     return false;
-                                                     cout<<" ClosingY ";
+
                                                     }
                     else{
                         Move_State = AI_No_move;
@@ -1514,7 +1515,7 @@ bool MeleeEnemy::KeepDistanceX(int threshold,int InPosX, int OffsetX){
                         return true;
                         }
 
-                        cout<<" ClosingX "<<endl;
+
 
 }
 
@@ -1536,7 +1537,7 @@ switch(Top_AI_State){
                         Move_State = AI_No_move;
 
                   }
-                       //     cout<<" choice1 "<<endl;
+
                     if((rand()%200 == 19)){
 
                     Bottom_AI_State = AI_Moving_In_Y_Attacking;
@@ -1566,7 +1567,6 @@ switch(Top_AI_State){
                     IsFlipped = (InPosX>mPosX);
            break;
         case AI_Idle:
-               //  cout<<" choice2 "<<endl;
 
           break;
         case AI_Moving_In_Y_Attacking:
@@ -1671,7 +1671,7 @@ vector<SDL_Rect> MeleeEnemy::GetHitBoxes(){
         TempRect.h = BoxRectToSDL_Rect(EnemyHitBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
 
-      // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
+
         TempRect = {0,0,0,0};
     }
 
@@ -1685,7 +1685,7 @@ vector<SDL_Rect> MeleeEnemy::GetHitBoxes(){
         TempRect.h = BoxRectToSDL_Rect(EnemyHitBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
 
-      // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
+
         TempRect = {0,0,0,0};
     }
 
@@ -1710,7 +1710,7 @@ vector<SDL_Rect> MeleeEnemy::GetAttackBoxes(){
         TempRect.h = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
 
-      // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
+
         TempRect = {0,0,0,0};
     }
 
@@ -1724,7 +1724,7 @@ vector<SDL_Rect> MeleeEnemy::GetAttackBoxes(){
         TempRect.h = BoxRectToSDL_Rect(EnemyAttackBoxes.at(ThisFrame).AttackRects.at(i)).h*ENEMY_SCALE;
         ReturnRectVect.push_back(TempRect);
 
-      // cout<<TempRect.x<<" "<<TempRect.y<<" "<<TempRect.w<<" "<<TempRect.h<<" "<<endl;
+
         TempRect = {0,0,0,0};
     }
 
@@ -1866,7 +1866,7 @@ int Enemy::EnemyLogic( vector<BulletCoord> PlayerBullets){
                     }
 
     }
-  //  cout<<endl;
+
     return 9999;
 }
 int Enemy::Framer(){
@@ -2008,9 +2008,22 @@ Dawn::Dawn()
           gDawnClips[ i ].w =  FRAME_SIZE;
           gDawnClips[ i ].h = FRAME_SIZE;
         }
+
+        //Dawn Damage
+
+        for(int i = 38; i<43; i++){
+          gDawnClips[ i ].x = (i-38)*FRAME_SIZE;
+          gDawnClips[ i ].y =   6*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+        }
 }
 
 int Dawn::framer(){
+
+
+
+
                 // This function determines how to animate Jill
                 // If  you want to set the location of the animation
                 // You must use the location* anim_speed
@@ -2061,7 +2074,7 @@ int Dawn::framer(){
 
                         if((Frame/ANIM_SPEED == 23)&&(PunchForward)){
                         DawnAnim = DAWN_COMBAT_IDLE;
-                        BattleStance = false;
+                        BattleStance = true;
                         Dawn_Still = false;
 
                         PunchForward = true;
@@ -2133,7 +2146,26 @@ int Dawn::framer(){
 
                     return Frame/ANIM_SPEED;
             }
-              //  cout<<Frame/ANIM_SPEED<<endl;
+            else if(DawnAnim == DAWN_DAMAGE){
+
+                Frame++;
+                if(Frame/ANIM_SPEED>42||(Frame/ANIM_SPEED)<38){
+                Frame =38*ANIM_SPEED;
+                }
+                if(ThisFrame==42){
+                    if(BattleStance){
+                        DawnAnim = DAWN_COMBAT_IDLE;
+
+                    }
+                    else{
+                        DawnAnim = DAWN_Idle;
+
+                    }
+                }
+
+                    return Frame/ANIM_SPEED;
+            }
+
 
 
 
@@ -2143,21 +2175,22 @@ void Dawn::DetectHit(vector<SDL_Rect> InRect, float InPosY){
     SDL_Rect TempRect;
     SDL_Rect TempRect1 = InRect.at(0);
     SDL_Rect TempRect2 = GetHitBoxes().at(0);
- //if((mPosY-15-InPosY)>17){
-   // cout<<TempRect1.x<<" "<<TempRect2.x<<" "<<TempRect2.x+TempRect2.w<<endl;
+
     for(int i = 0; i<InRect.size();i++){
     TempRect1 = InRect.at(0);
     TempRect2 = GetHitBoxes().at(0);
             if(  SDL_IntersectRect(&TempRect2,&TempRect1,&TempRect)){
+                if((IsFlipped&&mVelX>0)||(!IsFlipped&&mVelX<0)){
 
-                DawnAnim = DAWN_BLOCK;
+                   DawnAnim = DAWN_BLOCK;
 
+                   }
+                else{
+                DawnAnim = DAWN_DAMAGE;
+                }
 
-               // cout<<"Dawn was hit"<<endl;
     }
-            else{
-           renderflag = false;
-            }
+
 
     }
 
@@ -2329,6 +2362,7 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
         }
     //}
     }
+    if(DawnAnim == DAWN_DAMAGE){cout<<"I'm hit1"<<endl;}
 }
 
 void Dawn::move()
@@ -2340,7 +2374,9 @@ void Dawn::move()
     else{
         DAWN_VEL = DAWN_WALK_VEL;
     }*/
-    if(DawnAnim != DAWN_BLOCK){
+
+    if((DawnAnim != DAWN_BLOCK)&&(DawnAnim != DAWN_DAMAGE)){
+
     //Move the dfot left or right
     if(ControlState == true){
     mPosX += mVelX;//+mVelY*0.70710678118;
@@ -2529,7 +2565,6 @@ if(blinker){
             HitBoxRender();
 
         }
-
 
 }
 void Dawn::MoveFalse(){
@@ -2901,6 +2936,7 @@ LTimer::LTimer()
     mPaused = false;
     mStarted = false;
 }
+
 
 void LTimer::start()
 {
