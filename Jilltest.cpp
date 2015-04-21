@@ -15,9 +15,9 @@ and may not be redistributed without written permission.*/
 //#include <SpriteBox.h>f
 using namespace std;
 //Level Dimensions
-const int LEVEL_WIDTH = 5090;
-const int LEVEL_HEIGHT = 2344;
-//Screen dimension constants
+const int LEVEL_WIDTH = 5000;
+const int LEVEL_HEIGHT = 2000;
+//Screen dimension constant
 const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 600;
 const int DEBUG_X = 600;
@@ -29,7 +29,7 @@ const int  SHOOT_FRAMES = 8;
 const int LIGHT_KICK_FRAMES = 5;
 const float DAWN_SCALE = .7;
 const float ENEMY_SCALE = 3;
-const float BOX_SCALE = 2.5;
+const float BOX_SCALE = 1;
 const float GRAVITY = 1;
 const int FRAME_SIZE = 335;
 const int ANIM_SPEED = 5;
@@ -135,7 +135,10 @@ DAWN_PRESS_LEFT,
 DAWN_PRESS_RIGHT,
 DAWN_COMBAT_IDLE,
 DAWN_BLOCK,
-DAWN_DAMAGE
+DAWN_DAMAGE,
+DAWN_CROUCH,
+DAWN_CROUCHING,
+DAWN_UNCROUCHING
 };
 
 enum CollisionLineType{
@@ -223,6 +226,7 @@ BulletHandler::BulletHandler(){
 }
 
 bool BulletHandler::MakeBullet(float nx, float ny, bool Flipped){
+
         //cout<<endl<<IsFlipped;
         BulletCoord TempBullet{nx,ny,Flipped};
         Bulletarray.push_back(TempBullet);
@@ -373,6 +377,7 @@ class RenderSprite{
 
 public:
 
+ virtual void SetCam(float cXpos, float cYpos) = 0;
  virtual void render() = 0;
  virtual int getRenderPos() = 0;
 float getPosX(){
@@ -401,37 +406,14 @@ protected:
 
 };
 
-class CoverBox: public RenderSprite{
 
-    public:
-
-    CoverBox(float initX, float initY);
-
-    void SetPos(float PosX, float PosY);
-
-    void render();
-
-    void SetCam( float cXpos, float cYpos);
-
-    int getRenderPos(){
-
-    return mPosY + 68;
-
-    }
-
-    private:
-
-        SDL_Rect BoxRect;
-
-};
 class CollisionLine{
     public:
     // You declare the initial and Lengths of the Collision line
     // When you declare the class, you also specify if it is horizontal, vertical, or diagonal.
 
-    CollisionLine(float BeginX, float BeginY, float InputLength,CollisionType InputType);
+    CollisionLine(const float BeginX,const float BeginY,const float InputLength,CollisionLineType InputType);
 
-    CollisionLine(float BeginX, float BeginY, float InputLength, CollisionLineType InputLine, bool CollisionCondition);
 
     // Returns a bool if the line is out of bounds
     bool DidCollide(float CheckX, float CheckY, float CheckXNext, float CheckYNext);
@@ -441,7 +423,11 @@ class CollisionLine{
     CollisionLineType GetType();
 
     float GetLineLength();
+
     CollisionCoord GetLineCoord();
+
+    void LineStats();
+
     private:
     // The Beginning and ending coordinates
 
@@ -451,7 +437,7 @@ class CollisionLine{
     CollisionLineType ThisLine;
 
     // It can be either horizontal or diagonal
-    CollisionType ThisType;
+//    CollisionType ThisType;
     // The Length of the line
     float LineLength;
     /* This boolean tells which side of the collision line you are
@@ -467,7 +453,36 @@ class CollisionLine{
     */
     bool CollisionCondition;
 
+    vector<CollisionLine*> CoverBoxCollisionLines;
 };
+
+class CoverBox: public RenderSprite{
+
+    public:
+
+    CoverBox(float initX, float initY, vector<CollisionLine> &CollisionlineVector);
+    CoverBox(float initX, float initY);
+    void SetPos(float PosX, float PosY);
+
+    void render();
+
+    void SetCam( float cXpos, float cYpos);
+
+    int getRenderPos(){
+
+    return mPosY + 138;
+
+    }
+
+    vector<CollisionLine> GetCollisionLines();
+
+    private:
+
+    SDL_Rect BoxRect;
+    vector<CollisionLine> CoverBoxCollisionLines;
+
+};
+
 class Dawn: public RenderSprite
 {
     public:
@@ -486,7 +501,7 @@ class Dawn: public RenderSprite
 		void move();
 
 
-        void GetCollisionVector(vector<CollisionLine*> InputeCollisionVector);
+        void GetCollisionVector(vector<CollisionLine> InputeCollisionVector);
 
         void Logic();
 		//Shows the dot on the screen
@@ -498,7 +513,7 @@ class Dawn: public RenderSprite
 
 		Anim GetAnim();
 
-        void BoxCollide();
+
 
 		// Position accessors in string format
         string getPosXString();
@@ -512,16 +527,10 @@ class Dawn: public RenderSprite
 
 
         int getRenderPos(){
-            return mPosY + 125;
+            return mPosY + 218;
         }
 
-        void GetBoxes( CoverBox* InBoxes[] ){
 
-
-        for (int i = 0; i<NUM_BOXES; i++){
-        LevelBoxes[i] = InBoxes[i];
-        }
-        }
 
 
         vector<BulletCoord> GetJillBullets();
@@ -573,8 +582,6 @@ class Dawn: public RenderSprite
 
         bool blinker;
 
-        CoverBox* LevelBoxes[NUM_BOXES];
-
         SDL_Rect ShadowRect;
 
         float ShadowHeight;
@@ -585,7 +592,7 @@ class Dawn: public RenderSprite
 
         vector<attackboxes> DawnHitBoxes;
         vector<attackboxes> DawnAttackBoxes;
-        vector<CollisionLine*> DawnsCollisionVector;
+        vector<CollisionLine> DawnsCollisionVector;
 
         bool JillCheckCollision();
 
@@ -659,7 +666,7 @@ class Enemy: public RenderSprite
 
 		Anim GetAnim();
 
-        //void BoxCollide();
+
 
 		// Position accessors in string format
         string getPosXString();
@@ -676,18 +683,10 @@ class Enemy: public RenderSprite
             return mPosY + ENEMY_HEIGHT;
         }
 
-        void GetBoxes( CoverBox* InBoxes[] ){
-
-
-        for (int i = 0; i<NUM_BOXES; i++){
-        LevelBoxes[i] = InBoxes[i];
-        }
-        }
-
 
         int EnemyLogic( vector<BulletCoord> PlayerBullets);
 
-        void BoxCollide();
+
         private:
 
 
@@ -710,7 +709,7 @@ class Enemy: public RenderSprite
 
         bool blinker;
 
-        CoverBox* LevelBoxes[NUM_BOXES];
+
 
         SDL_Rect ShadowRect;
 
@@ -750,7 +749,7 @@ public:
 
         Anim GetAnim();
 
-        //void BoxCollide();
+
 
 		// Position accessors in string format
         string getPosXString();
@@ -863,9 +862,9 @@ LTexture gBoxTexture;
 LTexture gWall1;
 LTexture gWall2;
 LTexture gRoom1;
-
+LTexture gBGTextures;
 //LTexture gBGTexture;
-LBGTile gBGTextures[3][3];
+
 
 //Background Tile array
 
@@ -1738,50 +1737,6 @@ vector<SDL_Rect> MeleeEnemy::GetAttackBoxes(){
 
 
 
-void Enemy::BoxCollide(){
-   // bool onBox = false;
-    float tempX = 0;
-    float tempY = 0;
-    int F_x1 = 0;
-    int F_x2 = 0;
-    int F_x12 = 0;
-    int F_x22 = 0;
-    int F_x13 = 0;
-    int F_x23 = 0;
-    int checkPosX = mPosX - CposX;
-    int checkPosY = mPosY - CposY+150;
-    int Width = 69*1.5;
-    int Height = 37*1.5;
-    for (int k = 0; k<NUM_BOXES; k++){
-    tempX = LevelBoxes[k]->getPosX()-CposX;
-    tempY = LevelBoxes[k]->getPosY()-CposY+67*1.5;
-
-                        tempX = LevelBoxes[k]->getPosX()-CposX;
-                        tempY = LevelBoxes[k]->getPosY()-CposY+67*1.5;
-                        F_x1 = checkPosX+tempY-tempX;
-                        F_x2 = checkPosX+tempY-tempX-Width;
-                        F_x12 = checkPosX+150+tempY-tempX;
-                        F_x22 = checkPosX+150+tempY-tempX-Width;
-                        F_x13 = checkPosX+75+tempY-tempX;
-                        F_x23 = checkPosX+75+tempY-tempX-Width;
-
-
-
-					if((checkPosY<F_x1&&checkPosY>F_x2&&checkPosY>tempY&&checkPosY<tempY+Height||(checkPosY<F_x12&&checkPosY>F_x22&&checkPosY>tempY&&checkPosY<tempY+Height)||(checkPosY<F_x13&&checkPosY>F_x23&&checkPosY>tempY&&checkPosY<tempY+Height))){
-
-                    mPosY -= mVelY;
-                    mPosX -= mVelX+.71*mVelY;
-
-
-                    return;
-					}
-
-
-
-    }
-
-}
-
 void Enemy::SetCam( float cXpos, float cYpos, SDL_Rect* InputRect){
 
     CposX = cXpos;
@@ -1921,8 +1876,8 @@ void Enemy::move(){
 Dawn::Dawn()
 {
     //Initialize the offsets
-    mPosX = 30;
-    mPosY = 2000;
+    mPosX = 300;
+    mPosY = 300;
 
     //Initialize the velocity
     mVelX = 0;
@@ -2017,6 +1972,14 @@ Dawn::Dawn()
           gDawnClips[ i ].w =  FRAME_SIZE;
           gDawnClips[ i ].h = FRAME_SIZE;
         }
+
+        for(int i = 43; i<55; i++){
+          gDawnClips[ i ].x = (i-43)*FRAME_SIZE;
+          gDawnClips[ i ].y =   7*FRAME_SIZE;
+          gDawnClips[ i ].w =  FRAME_SIZE;
+          gDawnClips[ i ].h = FRAME_SIZE;
+        }
+
 }
 
 int Dawn::framer(){
@@ -2166,9 +2129,54 @@ int Dawn::framer(){
                     return Frame/ANIM_SPEED;
             }
 
+            else if(DawnAnim == DAWN_CROUCHING){
 
+                Frame++;
+                if(Frame/ANIM_SPEED>55||(Frame/ANIM_SPEED)<43){
 
+                Frame =43*ANIM_SPEED;
 
+                }
+               if(ThisFrame == 46){
+
+                DawnAnim = DAWN_CROUCH;
+
+                }
+               // cout<<ThisFrame<<endl;
+
+                    return Frame/ANIM_SPEED;
+            }
+             else if(DawnAnim == DAWN_CROUCH){
+
+                Frame++;
+                if(Frame/ANIM_SPEED>54||(Frame/ANIM_SPEED)<43){
+
+                Frame =46*ANIM_SPEED;
+
+                }
+
+               // cout<<ThisFrame<<endl;
+
+                    return Frame/ANIM_SPEED;
+            }
+             else if(DawnAnim == DAWN_UNCROUCHING){
+
+                Frame--;
+                if(Frame/ANIM_SPEED>46){
+
+                Frame =46*ANIM_SPEED;
+
+                }
+                if(Frame/ANIM_SPEED ==42 ){
+                    Frame = 0;
+                    DawnAnim = DAWN_Idle;
+                    Dawn_Still = false;
+                    BattleStance = false;
+                }
+               // cout<<ThisFrame<<endl;
+
+                    return Frame/ANIM_SPEED;
+            }
 }
 
 void Dawn::DetectHit(vector<SDL_Rect> InRect, float InPosY){
@@ -2298,13 +2306,11 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
                  mVelX = mVelY = 0;
                  mVelY -= DAWN_VEL;
 
-
-
                  break;
             case SDLK_DOWN:
 
                  mVelX = mVelY = 0;
-                        mVelY += DAWN_VEL;
+                 mVelY += DAWN_VEL;
 
                  break;
             case SDLK_LEFT:
@@ -2325,9 +2331,10 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
                             }
 
                 break;
-   //         case SDLK_SPACE: if(JillAnim != Jill_Jump){JillAnim = Jill_Jump; VertVel = JUMP_SPEED; InAir = true;} break;
-   //         case SDLK_s: if (JillAnim != JILL_Shoot){JillAnim = JILL_Shoot;} break;
-            case SDLK_d: if (DawnAnim != DAWN_PUNCH){DawnAnim = DAWN_PUNCH;} break;
+   //       case SDLK_SPACE: if(JillAnim != Jill_Jump){JillAnim = Jill_Jump; VertVel = JUMP_SPEED; InAir = true;} break;
+   //       case SDLK_s: if (JillAnim != JILL_Shoot){JillAnim = JILL_Shoot;} break;
+            case SDLK_g: if (DawnAnim != DAWN_PUNCH&&DawnAnim != DAWN_CROUCHING){DawnAnim = DAWN_PUNCH;} break;
+            case SDLK_b: if (DawnAnim != DAWN_CROUCHING){DawnAnim = DAWN_CROUCHING; Dawn_Still = true;} break;
             case SDLK_f:
                         if(mVelX != DAWN_VEL &&mVelY != DAWN_VEL){
                         BattleStance = !BattleStance;
@@ -2357,12 +2364,12 @@ void Dawn::handleEvent( SDL_Event& e ,const Uint8* KeyStates  )
             case SDLK_DOWN:if(mVelY == DAWN_VEL){ mVelY -= DAWN_VEL;IsMoving = IsMovingDOWN = false;} break;
             case SDLK_LEFT:if( mVelX == -DAWN_VEL){ mVelX += DAWN_VEL; IsMoving = IsMovingLEFT = false; }break;
             case SDLK_RIGHT:if(mVelX ==DAWN_VEL){ mVelX -= DAWN_VEL;IsMoving = IsMovingRIGHT = false; }break;
-
+            case SDLK_b: DawnAnim = DAWN_UNCROUCHING; break;
 
         }
     //}
     }
-    if(DawnAnim == DAWN_DAMAGE){cout<<"I'm hit1"<<endl;}
+
 }
 
 void Dawn::move()
@@ -2375,7 +2382,7 @@ void Dawn::move()
         DAWN_VEL = DAWN_WALK_VEL;
     }*/
 
-    if((DawnAnim != DAWN_BLOCK)&&(DawnAnim != DAWN_DAMAGE)){
+    if((DawnAnim != DAWN_BLOCK)&&(DawnAnim != DAWN_DAMAGE&&DawnAnim != DAWN_CROUCH&&DawnAnim != DAWN_CROUCHING&&DawnAnim != DAWN_UNCROUCHING)){
 
     //Move the dfot left or right
     if(ControlState == true){
@@ -2388,7 +2395,7 @@ void Dawn::move()
     IsWallColliding = false;
 
     for (int i = 0; i<DawnsCollisionVector.size();i++){
-            if(CheckCollisionLine(DawnsCollisionVector.at(i))){
+            if(CheckCollisionLine(&DawnsCollisionVector.at(i))){
             IsWallColliding = true;
 
 
@@ -2403,11 +2410,11 @@ void Dawn::move()
             mPosY += mVelY*0.70710678118;
             }
     }
-        if(DawnAnim !=DAWN_PUNCH&&!BattleStance){
+        if(DawnAnim !=DAWN_PUNCH&&!BattleStance&&DAWN_CROUCH){
                 DawnAnim = DAWN_Idle;
         }
 
-        if(DawnAnim !=DAWN_PUNCH&&BattleStance){
+        if(DawnAnim !=DAWN_PUNCH&&BattleStance&&DAWN_CROUCH){
                 DawnAnim = DAWN_COMBAT_IDLE;
         }
         if(!BattleStance){
@@ -2468,7 +2475,7 @@ void Dawn::move()
     //NOTE! This function will need to be changed everytime a new animation is added.
     // I meed to figure out a more elegant way to do this.
 
-    BoxCollide();
+
     }
 
     // Iterate the bullets
@@ -2487,20 +2494,16 @@ void Dawn::move()
 
 
 }
-void Dawn::GetCollisionVector(vector<CollisionLine*> InputCollisionVector){
+
+
+
+void Dawn::GetCollisionVector(vector<CollisionLine> InputCollisionVector){
 
     // Must finish this later
 
     DawnsCollisionVector = InputCollisionVector;
 
-    /*
-    for(int i = 0; i<InputCollisionVector.size();i++){
-    if(InputCollisionVector.at(0)->DidCollide(mPosX,mPosY+135,mVelX+mVelY*0.70710678118,mVelY*0.70710678118)){
-    cout<<"jill is within the bounds of the line"<<endl;
-            return.
-        }
-    }
-    */
+
 
 }
 
@@ -2544,8 +2547,10 @@ if(blinker){
     gJillTexture.render( mPosX - CposX-AnimOffsetX, rendY,DAWN_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
     }
 
-
-
+/*    SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
+    SDL_Rect fillRect = { mPosX - CposX, rendY+218, 300, 3};
+    SDL_RenderFillRect( gRenderer, &fillRect );
+*/
 
         //render the bullets
 
@@ -2665,86 +2670,9 @@ void Dawn::SetCam( float cXpos, float cYpos){
     ThisFrame = framer();
     Anim_Rect = &gDawnClips[ThisFrame];
 
+
 }
 
-void Dawn::BoxCollide(){
-   // bool onBox = false;
-blinker = !blinker;
-    float tempX = 0;
-    float tempY = 0;
-    int F_x1 = 0;
-    int F_x2 = 0;
-    int F_x12 = 0;
-    int F_x22 = 0;
-    int F_x13 = 0;
-    int F_x23 = 0;
-    int checkPosX = mPosX - CposX;
-    int checkPosY = mPosY - CposY+150;
-    int Width = 69*1.5;
-    int Height = 37*1.5;
-    for (int k = 0; k<NUM_BOXES; k++){
-    tempX = LevelBoxes[k]->getPosX()-CposX;
-    tempY = LevelBoxes[k]->getPosY()-CposY+67*1.5;
-    	/*	for( int j = tempY; j < tempY+Height; j++)
-				{
-					for(int i = tempX; i<Height+tempX+Width; i++){
-                        F_x1 = i+tempY-tempX;
-                        F_x2 = i+tempY-tempX-Width;
-					if(j<F_x1&&j>F_x2&&j>tempY&&j<tempY+Height){
-
-					SDL_RenderDrawPoint( gRenderer, i, j );
-
-
-					}
-					}
-				} */
-                        tempX = LevelBoxes[k]->getPosX()-CposX;
-                        tempY = LevelBoxes[k]->getPosY()-CposY+67*1.5;
-                        F_x1 = checkPosX+tempY-tempX;
-                        F_x2 = checkPosX+tempY-tempX-Width;
-                        F_x12 = checkPosX+150+tempY-tempX;
-                        F_x22 = checkPosX+150+tempY-tempX-Width;
-                        F_x13 = checkPosX+75+tempY-tempX;
-                        F_x23 = checkPosX+75+tempY-tempX-Width;
-
-
-
-					if((checkPosY<F_x1&&checkPosY>F_x2&&checkPosY>tempY&&checkPosY<tempY+Height||(checkPosY<F_x12&&checkPosY>F_x22&&checkPosY>tempY&&checkPosY<tempY+Height)||(checkPosY<F_x13&&checkPosY>F_x23&&checkPosY>tempY&&checkPosY<tempY+Height))){
-             //       SDL_Rect fillRect = { 500, 100, 50, 50};
-			//	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0x00, 0x00, 0xFF );
-
-			//	SDL_RenderFillRect( gRenderer, &fillRect );
-
-                   // return true;
-                    if(VertDis<67){
-                    mPosY -= mVelY;
-                    mPosX -= mVelX+.71*mVelY;
-
-                            }
-                    if(VertDis>67){
-
-                        ShadowHeight = 85;
-                    }
-
-
-
-                    if(VertDis>67&&(VertDis+VertVel)<67){
-                        VertDis-=VertVel;
-                        VertVel = 0;
-                        InAir = false;
-                        }
-
-                    //return;
-                    return;
-					}
-
-                    //    InAir = true;
-
-
-    }
-    ShadowHeight = 0;
-    InAir = true;
-}
 
 vector<BulletCoord> Dawn::GetJillBullets(){
 
@@ -2883,12 +2811,12 @@ vector<SDL_Rect> Dawn::GetAttackBoxes(){
 }
 
 
-CoverBox::CoverBox(float initX, float initY){
+CoverBox::CoverBox(float initX, float initY, vector<CollisionLine> &CollisionlineVector){
 
     BoxRect.x = 0;
     BoxRect.y = 0;
-    BoxRect.h = 107;
-    BoxRect.w = 107;
+    BoxRect.h = 214;
+    BoxRect.w = 214;
 
     mPosX = initX;
     mPosY = initY;
@@ -2898,8 +2826,43 @@ CoverBox::CoverBox(float initX, float initY){
     mVelY = 0;
     CposX = 0;
     CposY =0;
-}
+    float linelength = 145;
+    float LineY = initY+130;
+    float LineX = initX-5;
+    CollisionLine Upline(LineX,LineY,linelength,HORIZONTAL_LINE_UPPER_STOP );
+     CollisionLine LeftLine(LineX,LineY,linelength*.8666,DIAGONAL_LINE_LEFT_STOP);
+     CollisionLine BottomLine(LineX+linelength*.6,LineY+linelength*.6,linelength,HORIZONTAL_LINE_LOWER_STOP);
+     CollisionLine RightLine(LineX+linelength,LineY,linelength*.8666,DIAGONAL_LINE_RIGHT_STOP);
 
+    CollisionlineVector.push_back(Upline);
+    CollisionlineVector.push_back(LeftLine);
+    CollisionlineVector.push_back(BottomLine);
+    CollisionlineVector.push_back(RightLine);
+}
+CoverBox::CoverBox(float initX, float initY){
+
+    BoxRect.x = 0;
+    BoxRect.y = 0;
+    BoxRect.h = 214;
+    BoxRect.w = 214;
+
+    mPosX = initX;
+    mPosY = initY;
+    VertDis = 0;
+    VertVel = 0;
+    mVelX = 0;
+    mVelY = 0;
+    CposX = 0;
+    CposY =0;
+    float linelength = 135;
+    CollisionLine Upline(initX,initY+139,135,HORIZONTAL_LINE_UPPER_STOP );
+    // CollisionLine LeftLine();
+    // CollisionLine BottomLine();
+    // CollisionLine RightLine();
+
+    CoverBoxCollisionLines.push_back(Upline);
+
+}
 void Dawn::DestroyJillBullet(int index){
 
        if(index !=9999){
@@ -2909,13 +2872,17 @@ void Dawn::DestroyJillBullet(int index){
 
 void CoverBox::render(){
 
-//gBoxTexture.render( mPosX - CposX, mPosY - CposY,BOX_SCALE, &BoxRect,0.0,NULL, SDL_FLIP_HORIZONTAL );
+    //gBoxTexture.render( mPosX - CposX, mPosY - CposY,BOX_SCALE, &BoxRect,0.0,NULL, SDL_FLIP_HORIZONTAL );
 
 
-//if((0<(mPosY - CposY))&&((mPosY - CposY)<SCREEN_HEIGHT)&&(0<(mPosX - CposX))&&((mPosX - CposX)<SCREEN_WIDTH+107)){
-gBoxTexture.render(mPosX - CposX, mPosY - CposY, BOX_SCALE, &BoxRect);
+    //if((0<(mPosY - CposY))&&((mPosY - CposY)<SCREEN_HEIGHT)&&(0<(mPosX - CposX))&&((mPosX - CposX)<SCREEN_WIDTH+107)){
+    gBoxTexture.render(mPosX - CposX, mPosY - CposY, BOX_SCALE, &BoxRect);
 
-//}
+ /*   SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
+    SDL_Rect fillRect = { mPosX - CposX, mPosY - CposY+219, 300, 3};
+    SDL_RenderFillRect( gRenderer, &fillRect );
+ */
+    //}
 }
 
 void CoverBox::SetCam( float cXpos, float cYpos){
@@ -2925,6 +2892,11 @@ void CoverBox::SetCam( float cXpos, float cYpos){
 
 }
 
+vector<CollisionLine> CoverBox::GetCollisionLines(){
+
+    return CoverBoxCollisionLines;
+
+}
 
 
 LTimer::LTimer()
@@ -3029,20 +3001,9 @@ bool LTimer::isPaused()
 	//Timer is running and paused
     return mPaused && mStarted;
 }
-CollisionLine::CollisionLine(float BeginX, float BeginY, float InputLength,CollisionType InputType){
+CollisionLine::CollisionLine(const float BeginX,const float BeginY,const float InputLength,CollisionLineType InputType){
 
-ThisType = InputType;
-
-LineLength = InputLength;
-
-BeginCoord.mX = BeginX;
-BeginCoord.mY = BeginY;
-
- }
-
- CollisionLine::CollisionLine(float BeginX, float BeginY, float InputLength, CollisionLineType InputLine, bool CollisionCondition){
-
-ThisLine = InputLine;
+ThisLine = InputType;
 
 LineLength = InputLength;
 
@@ -3050,6 +3011,8 @@ BeginCoord.mX = BeginX;
 BeginCoord.mY = BeginY;
 
  }
+
+
 
 
 
@@ -3101,6 +3064,7 @@ void CollisionLine::RenderLine(SDL_Rect InputRect){
 }
 CollisionLineType CollisionLine::GetType(){
 
+
     return ThisLine;
 
 }
@@ -3116,6 +3080,13 @@ float CollisionLine::GetLineLength(){
     return LineLength;
 
 }
+
+void CollisionLine::LineStats(){
+
+    cout<<" This is a Collision line at "<<BeginCoord.mX<<" "<<BeginCoord.mY<<" Of Length "<<LineLength<<endl;
+
+}
+
 SDL_Rect Intersector(SDL_Rect ScreenRect, SDL_Rect BGRect){
 
 
@@ -3341,40 +3312,9 @@ bool loadMedia()
 		printf( "Failed to load dot texture!\n" );
 		success = false;
 	}
-/*		if( !gBGTexture.loadFromFile( "./BackGround.png" ) )
-	{
-		printf( "Failed to load background texture!\n" );
-		success = false;
-	}
-*/
 
 
-     	if( !gBGTextures[0][0].loadFromFile( "./BackGround00.png" ) )
-	{
-		printf( "Failed to load dot texture!\n" );
-		success = false;
-	}
-        if( !gBGTextures[0][1].loadFromFile( "./BackGround01.png" ) )
-	{
-		printf( "Failed to load dot texture!\n" );
-		success = false;
-	}
-        if( !gBGTextures[1][0].loadFromFile( "./BackGround10.png" ) )
-	{
-		printf( "Failed to load dot texture!\n" );
-		success = false;
-	}
-        if( !gBGTextures[1][1].loadFromFile( "./BackGround11.png" ) )
-	{
-		printf( "Failed to load dot texture!\n" );
-		success = false;
-	}
-        if( !gBGTextures[2][0].loadFromFile( "./BackGround20.png" ) )
-	{
-		printf( "Failed to load dot texture!\n" );
-		success = false;
-	}
-        if( !gBGTextures[2][1].loadFromFile( "./BackGround21.png" ) )
+     	if( !gBGTextures.loadFromFile( "./SneakRoomFloor.png" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
@@ -3388,23 +3328,11 @@ bool loadMedia()
         if(!gShadowTexture.loadFromFile("./Shadow.png")){
         printf( "Failed to load background texture!\n" );
 		success = false;
-        }
+        }/*
         if(!gGunEnemyTexture.loadFromFile("./Enemy.png")){
         printf( "Failed to load background texture!\n" );
 		success = false;
-        }
-        if(!gWall1.loadFromFile("./Wall1.png")){
-        printf( "Failed to load background texture!\n" );
-		success = false;
-        }
-        if(!gWall2.loadFromFile("./Wall2.png")){
-        printf( "Failed to load background texture!\n" );
-		success = false;
-        }
-        if(!gRoom1.loadFromFile("./Room1.png")){
-        printf( "Failed to load background texture!\n" );
-		success = false;
-        }
+        }*/
         if(!gMeleeEnemyTexture.loadFromFile("./MeleeEnemy1.png")){
         printf( "Failed to load background texture!\n" );
 		success = false;
@@ -3457,13 +3385,7 @@ bool loadMedia()
            TempRect.w = BGTILE_SIZE;
            TempRect.h = BGTILE_SIZE;
 
-          for(int i = 0; i<3; i++){
-            for(int j = 0; j<3;j++){
-            TempRect.x = i*BGTILE_SIZE;
-            TempRect.y = j*BGTILE_SIZE;
-            gBGTextures[i][j].SetRect(TempRect);
-            }
-          }
+
 
 	}
 	return success;
@@ -3526,12 +3448,8 @@ void close()
     gWall2.free();
     gBoxTexture.free();
     gTextTexture.free();
-    gBGTextures[0][0].free();
-    gBGTextures[0][1].free();
-    gBGTextures[1][0].free();
-    gBGTextures[1][1].free();
-    gBGTextures[2][0].free();
-    gBGTextures[2][1].free();
+    gBGTextures.free();
+
     	//Free global font
 	TTF_CloseFont( gFont );
 	gFont = NULL;
@@ -3580,16 +3498,21 @@ int main( int argc, char* args[] )
 
            // int frame = 11;
 
-			//The jill that will be moving around on the screen
+			/*
+
+			OCCLUSION TILES
+			Will have to reset these
+
 			SDL_Rect Wall1Rect = {15,455,1597,1635};
 			OcclusionTile Wall1(Wall1Rect,&gWall1);
 			SDL_Rect Wall2Rect = {401,0,1136,865};
 			OcclusionTile Wall2(Wall2Rect,&gWall2);
             SDL_Rect Room1Rect = {1337,619,2750,1485};
 			OcclusionTile Room1(Room1Rect,&gRoom1);
+			*/
 			Dawn jill;
-            Enemy enemy1;
-            MeleeEnemy enemy2(1500,733);
+         //   Enemy enemy1;
+          /*  MeleeEnemy enemy2(1500,733);
             PatrolPoint TempPoint;
             vector<PatrolPoint> TempPatrolPointVector;
             TempPatrolPointVector.push_back(TempPoint);
@@ -3601,8 +3524,11 @@ int main( int argc, char* args[] )
             TempPatrolPointVector.at(1).mX = 3200;
             TempPatrolPointVector.at(1).mY = 733;
             enemy2.GetPatrol(TempPatrolPointVector);
+            */
 
-            CollisionLine  LineOne(0,2093,1620,HORIZONTAL_LINE_LOWER_STOP, true);
+
+            CollisionLine  LineOne(0,2093,1620,HORIZONTAL_LINE_LOWER_STOP);
+           /*
             CollisionLine  LineTwo(390,863,1740,DIAGONAL_LINE_RIGHT_STOP, true);
             CollisionLine  LineThree(390,865,1132,HORIZONTAL_LINE_LOWER_STOP, true);
             CollisionLine  LineFour(1038,375,690,DIAGONAL_LINE_RIGHT_STOP,true);
@@ -3614,7 +3540,7 @@ int main( int argc, char* args[] )
             CollisionLine  LineTen(3015,1030,1515,DIAGONAL_LINE_RIGHT_STOP, true);
             CollisionLine  LineEleven(2400,2105,1679,HORIZONTAL_LINE_LOWER_STOP, true);
             // The vector that stores our collision lines
-            vector<CollisionLine*> CollisionVector;
+
             CollisionVector.push_back(&LineOne);
             CollisionVector.push_back(&LineTwo);
             CollisionVector.push_back(&LineThree);
@@ -3626,30 +3552,71 @@ int main( int argc, char* args[] )
             CollisionVector.push_back(&LineNine);
             CollisionVector.push_back(&LineTen);
             CollisionVector.push_back(&LineEleven);
-            jill.GetCollisionVector(CollisionVector);
+                        */
             int BulletToDestroy;
-            CoverBox Box1(400,350);
-            CoverBox Box2(800,450);
-            CoverBox Box3(600,550);
-            // Our array of sprites pointers
+            vector<CollisionLine> CollisionVector;
+            cout<<CollisionVector.size()<<endl;
+            CoverBox Box1(1902+2,557-135,CollisionVector);
+            CoverBox Box2(1984+2,639-135,CollisionVector);
+            CoverBox Box3(2066+2,721-135,CollisionVector);
+            CoverBox Box4(2148+2,803-135,CollisionVector);
+            CoverBox Box5(2230+2,885-135,CollisionVector);
+
+
+                CollisionVector.at(0).LineStats();
+                CollisionVector.at(1).LineStats();
+
+                        // Our array of sprites pointers
             vector<RenderSprite*> RenderVector;
+
             RenderVector.push_back(&jill);
-         //   RenderVector.push_back(&Box1);
-         //   RenderVector.push_back(&Box2);
-         //   RenderVector.push_back(&Box3);
-         //   RenderVector.push_back(&enemy1);
-            RenderVector.push_back(&enemy2);
+            RenderVector.push_back(&Box1);
+            RenderVector.push_back(&Box2);
+            RenderVector.push_back(&Box3);
+            RenderVector.push_back(&Box4);
+            RenderVector.push_back(&Box5);
+
+            vector<CoverBox*> CoverBoxVector;
+            CoverBoxVector.push_back(&Box1);
+            CoverBoxVector.push_back(&Box2);
+            CoverBoxVector.push_back(&Box3);
+            CoverBoxVector.push_back(&Box4);
+            CoverBoxVector.push_back(&Box5);
+            //cout<<CoverBoxVector.at(0)->GetCollisionLines().at(0).GetCollisionCoord().mX;
+        //  RenderVector.push_back(&enemy1);
+        //  RenderVector.push_back(&enemy2);
+
+            //cout<<CoverBoxVector.at(0)->GetCollisionLines().at(0)->GetLineCoord().mX<<endl;
+
+
+        /*     for(int i = 0; i<CoverBoxVector.size();i++){
+
+                for(int j = 0; j<CoverBoxVector.at(i)->GetCollisionLines().size();j++){
+
+                    CollisionVector.push_back(CoverBoxVector.at(i)->GetCollisionLines().at(j));
+                   // cout<<CoverBoxVector.at(0)->GetLineCoord().mX<<endl;
+                }
+
+            }
+            */
+
+          //  cout<<CollisionVector.at(0)->GetLineCoord().mX<<endl;
+
+
+            jill.GetCollisionVector(CollisionVector);
+
+
             int NumRenderSprites = RenderVector.size();
             RenderSprite* RenderArray[RenderVector.size()];
+
+
+
+
             for(int i = 0; i<NumRenderSprites; i++){
                 RenderArray[i] = RenderVector.at(i);
             }
-            CoverBox* BoxArray[NUM_BOXES];
 
-            BoxArray[0] = &Box1;
-            BoxArray[1] = &Box2;
-            BoxArray[2] = &Box3;
-            jill.GetBoxes( BoxArray);
+
             //SDL camera
             SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
@@ -3712,20 +3679,20 @@ int main( int argc, char* args[] )
 				jill.move();
 				jill.Logic();
 
-                enemy2.move();
-                enemy2.AI(jill.getPosX(),jill.getPosY());
+            //    enemy2.move();
+            //    enemy2.AI(jill.getPosX(),jill.getPosY());
 
 
 
 
                 //Dawn Destroy's a bullet if it hits an enemy
-                jill.DestroyJillBullet(enemy1.EnemyLogic(jill.GetJillBullets()));
-                jill.DestroyJillBullet(enemy2.EnemyLogic(jill.GetJillBullets()));
+           //     jill.DestroyJillBullet(enemy1.EnemyLogic(jill.GetJillBullets()));
+           //     jill.DestroyJillBullet(enemy2.EnemyLogic(jill.GetJillBullets()));
 
                 //Dawn and the enemy detect hitboxes
 
-                enemy2.DetectHit(jill.GetAttackBoxes(),jill.getPosY());
-                jill.DetectHit(enemy2.GetAttackBoxes(),enemy2.getPosY());
+              //  enemy2.DetectHit(jill.GetAttackBoxes(),jill.getPosY());
+              //  jill.DetectHit(enemy2.GetAttackBoxes(),enemy2.getPosY());
 
                 //Center the camera over the dot
 				camera.x = ( jill.getPosX() + jill.GetWidth() / 2 ) - SCREEN_WIDTH / 2;
@@ -3753,12 +3720,8 @@ int main( int argc, char* args[] )
 
 
 
-                jill.SetCam(camera.x, camera.y);
-                Box1.SetCam(camera.x, camera.y);
-                Box2.SetCam(camera.x, camera.y);
-                Box3.SetCam(camera.x, camera.y);
-                enemy1.SetCam(camera.x, camera.y, &gEnemyClips[enemy1.Framer()/ANIM_SPEED]);
-                enemy2.SetCam(camera.x, camera.y);
+            //    enemy1.SetCam(camera.x, camera.y, &gEnemyClips[enemy1.Framer()/ANIM_SPEED]);
+            //    enemy2.SetCam(camera.x, camera.y);
 
 				//Clear screen
 
@@ -3768,21 +3731,13 @@ int main( int argc, char* args[] )
 				//Render objects
               //  gBGTexture.render( 0, 0,1, &camera );
 
-   BGRenderRect = Intersector(camera,gBGTextures[0][0].GetRect());
-   gBGTextures[0][0].render(1,&BGRenderRect,&camera);
-   BGRenderRect = Intersector(camera,gBGTextures[0][1].GetRect());
-   gBGTextures[0][1].render(1,&BGRenderRect,&camera);
-   BGRenderRect = Intersector(camera,gBGTextures[1][0].GetRect());
-   gBGTextures[1][0].render(1,&BGRenderRect,&camera);
-   BGRenderRect = Intersector(camera,gBGTextures[1][1].GetRect());
-   gBGTextures[1][1].render(1,&BGRenderRect,&camera);
-   BGRenderRect = Intersector(camera,gBGTextures[2][0].GetRect());
-   gBGTextures[2][0].render(1,&BGRenderRect,&camera);
-   BGRenderRect = Intersector(camera,gBGTextures[2][1].GetRect());
-   gBGTextures[2][1].render(1,&BGRenderRect,&camera);
-   Wall1.render(camera,jill.getPosX(),jill.getPosY());
-   Wall2.render(camera,jill.getPosX(),jill.getPosY());
-   Room1.render(camera,jill.getPosX(),jill.getPosY());
+
+   gBGTextures.render(0,0,1,&camera);
+
+
+//   Wall1.render(camera,jill.getPosX(),jill.getPosY());
+//   Wall2.render(camera,jill.getPosX(),jill.getPosY());
+//   Room1.render(camera,jill.getPosX(),jill.getPosY());
     for(int i = 0; i< NumRenderSprites; i++){
                     for(int j = 0; j<NumRenderSprites; j++){
                             int I = RenderArray[i]->getRenderPos();
@@ -3801,6 +3756,7 @@ int main( int argc, char* args[] )
                 }
 
                 for(int i = 0; i<NumRenderSprites ; i ++){
+                RenderArray[i]->SetCam(camera.x, camera.y);
                 RenderArray[i]->render();
 
                 }
@@ -3854,8 +3810,9 @@ int main( int argc, char* args[] )
                 // SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
 
                 //LineOne.RenderLine(camera);
+
                 for(int i = 0; i<CollisionVector.size();i++){
-                    CollisionVector.at(i)->RenderLine(camera);
+                    CollisionVector.at(i).RenderLine(camera);
                     }
                 }
 
