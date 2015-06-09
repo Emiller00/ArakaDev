@@ -11,7 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Bullet.cpp" />
     <ClCompile Include="..\Jilltest.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Bullet.h" />
+    <ClInclude Include="..\Enums.h" />
+    <ClInclude Include="..\Structs.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{814B3BC3-CE47-45D6-9EE3-67BB2F794275}</ProjectGuid>
