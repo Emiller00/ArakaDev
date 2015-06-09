@@ -1,7 +1,9 @@
 #include "Collision.h"
 #include "Enums.h"
 #include <iostream>
+#include <fstream>
 
+using namespace std;
 
 CollisionLine::CollisionLine(const float BeginX,const float BeginY,const float InputLength,CollisionLineType InputType){
 
@@ -75,3 +77,38 @@ void CollisionLine::LineStats(){
     std::cout<<" This is a Collision line at "<<BeginCoord.mX<<" "<<BeginCoord.mY<<" Of Length "<<LineLength<< std::endl;
 
 }
+
+vector<attackboxes>  CollisionBoxArray(string FileInput){
+    vector<attackboxes> ReturnArray;
+    attackboxes TempBoxes;
+    BoxRect TempRect;
+    ifstream InFile(FileInput);
+    int temp = 0;
+    int BoxIndex = 0;
+    InFile >> temp;
+    while(!InFile.eof()){
+        InFile >> temp;
+        if(temp != 1111){
+            TempRect.mX = temp;
+            for(int i = 0; i <3; i++){
+                switch(i){
+                    case 0: InFile>> TempRect.mY; break;
+                    case 1: InFile>> TempRect.mW; break;
+                    case 2: InFile>> TempRect.mH; break;
+                }
+            }
+            TempBoxes.AttackRects.push_back(TempRect);
+        }
+
+        else{
+            TempBoxes.Index = BoxIndex;
+            BoxIndex++;
+            ReturnArray.push_back(TempBoxes);
+            TempBoxes.AttackRects.clear();
+
+        }
+
+    }
+    return ReturnArray;
+}
+

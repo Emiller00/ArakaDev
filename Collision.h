@@ -3,6 +3,7 @@
 #define COLLISION_H
 #include <SDL.h>
 #include <vector>
+#include "Constants.h"
 
 enum CollisionLineType;
 #include "Structs.h"
@@ -57,5 +58,6 @@ class CollisionLine{
 };
 
 
+std::vector<attackboxes>  CollisionBoxArray(std::string FileInput);
 
 #endif

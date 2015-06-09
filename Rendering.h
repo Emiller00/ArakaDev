@@ -124,4 +124,6 @@ class LBGTile: public LTexture
         SDL_Rect BGRect;
     };
 
+SDL_Rect BoxRectToSDL_Rect(BoxRect InRect);
+
 #endif

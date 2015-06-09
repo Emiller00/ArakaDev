@@ -202,3 +202,16 @@ void LBGTile::render(SDL_Renderer* gRenderer, float scaler, SDL_Rect* clip ,SDL_
 	SDL_RenderCopyEx( gRenderer, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
+
+SDL_Rect BoxRectToSDL_Rect(BoxRect InRect){
+    SDL_Rect OutRect;
+
+    OutRect.x = InRect.mX;
+    OutRect.y = InRect.mY;
+    OutRect.h = InRect.mH;
+    OutRect.w = InRect.mW;
+
+    return OutRect;
+
+}
+
