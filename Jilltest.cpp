@@ -3,18 +3,20 @@ and may not be redistributed without written permission.*/
 
 //Using SDL, SDL_image, standard IO, and strings
 #include <vector>
-#include <SDL.h>
-#include <SDL_image.h>
 #include <stdio.h>
 #include <string>
-#include <SDL_ttf.h>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <time.h>
+
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 //#include <SpriteBox.h>f
 using namespace std;
 //Level Dimensions
+
 const int LEVEL_WIDTH = 5000;
 const int LEVEL_HEIGHT = 2000;
 //Screen dimension constant
@@ -248,6 +250,8 @@ bool BulletHandler::MakeBullet(float nx, float ny, bool Flipped){
         BulletCoord TempBullet{nx,ny,Flipped};
         Bulletarray.push_back(TempBullet);
 
+        return false; //josh: had to return something
+
 
 }
 
@@ -255,6 +259,7 @@ bool BulletHandler::DestroyBullet(int index){
 
         Bulletarray.erase(Bulletarray.begin()+index);
 
+        return false; //josh: had to return something
 }
 
 
@@ -676,8 +681,8 @@ class Enemy: public RenderSprite
         int Framer();
 
 		//The dimensions of the dot
-		static constexpr  int ENEMY_WIDTH = 100;
-		static constexpr   int ENEMY_HEIGHT = 100;
+		static const  int ENEMY_WIDTH = 100;
+		static const   int ENEMY_HEIGHT = 100;
 
 		//Maximum axis velocity of the dot
         const float ENEMY_WALK_VEL = 10;
@@ -762,8 +767,8 @@ public:
 
 
 		//The dimensions of the dot
-		static constexpr  int ENEMY_WIDTH = 100;
-		static constexpr   int ENEMY_HEIGHT = 100;
+		static const  int ENEMY_WIDTH = 100;
+		static const   int ENEMY_HEIGHT = 100;
 
 		//Maximum axis velocity of the dot
         const float ENEMY_WALK_VEL = DAWN_WALK_VEL;
@@ -856,8 +861,8 @@ public:
 
         int ThisFrame = 0;
 
-        int OffSetArray[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        int OffSetArrayFlipped[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        int OffSetArray[16];
+        int OffSetArrayFlipped[16];
         int KeepingXDistanct = 0;
         bool AttackModeON = true;
         vector<CollisionLine> MeleeEnemyCollisionVector;
@@ -2789,28 +2794,17 @@ return DawnAnim;
 
 string Dawn::getPosXString(){
 
-        char Jbuffer[20];
-        int temp = mPosX;
-        snprintf(Jbuffer, 20, "%d", temp);
-        return Jbuffer;
+        return std::to_string(mPosX);
 }
 
 string Dawn::getPosYString(){
 
-        char Jbuffer[20];
-        int temp = mPosY;
-        snprintf(Jbuffer, 20, "%d", temp);
-
-        return Jbuffer;
+        return std::to_string(mPosY);
 }
 
 string Dawn::getVertString(){
 
-        char Jbuffer[20];
-        int temp = VertDis;
-        snprintf(Jbuffer, 20, "%d", temp);
-
-        return Jbuffer;
+        return std::to_string(VertDis);
 }
 
 
@@ -2891,6 +2885,7 @@ bool Dawn::JillCheckCollision(){
     for(int i = 0; i<DawnsCollisionVector.size();i++){
 
     }
+        return false; //josh: had to return something
 
 }
 
@@ -3825,7 +3820,7 @@ int main( int argc, char* args[] )
             enemy2.GetCollisionVector(CollisionVector);
 
             int NumRenderSprites = RenderVector.size();
-            RenderSprite* RenderArray[RenderVector.size()];
+            RenderSprite* RenderArray[9999];
 
             for(int i = 0; i<NumRenderSprites; i++){
                 RenderArray[i] = RenderVector.at(i);
