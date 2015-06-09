@@ -17,39 +17,12 @@ and may not be redistributed without written permission.*/
 #include "Enums.h"
 #include "Bullet.h"
 #include "Structs.h"
+#include "Rendering.h"
 
 
 //#include <SpriteBox.h>f
 using namespace std;
 //Level Dimensions
-
-const int LEVEL_WIDTH = 5000;
-const int LEVEL_HEIGHT = 2000;
-//Screen dimension constant
-const int SCREEN_WIDTH = 1000;
-const int SCREEN_HEIGHT = 600;
-const int DEBUG_X = 600;
-const int DEBUG_Y = 20;
-const int IDLE_FRAMES = 9;
-const int RUN_FRAMES = 9;
-const int JUMP_FRAMES = 12;
-const int  SHOOT_FRAMES = 8;
-const int LIGHT_KICK_FRAMES = 5;
-const float DAWN_SCALE = .7;
-const float ENEMY_SCALE = 3;
-const float BOX_SCALE = 1;
-const float GRAVITY = 1;
-const int FRAME_SIZE = 335;
-const int ANIM_SPEED = 5;
-const int ANIM_SPEED2 = 6;
-const int ANIM_SPEED3 = 6;
-const int JUMP_SPEED = 20;
-const int NUM_BOXES = 3;
-const int BULLET_SPEED = 15;
-const int BGTILE_SIZE = 2000;
-const int DAWN_WALK_VEL = 4;
-const int DAWN_BATTLE_VEL = 3;
-const int WALL_HEIGHT = 163;
 
 bool ControlState = false;
 bool renderflag = false;
@@ -57,19 +30,6 @@ bool renderflag2 = false;
 bool renderflag3 = false;
 bool LineRenderFlag = false;
 bool HitBoxFlag = false;
-// Animation Variable.
-// Note the sign Convention
-struct BoxRect{
-    float mX;
-    float mY;
-    float mW;
-    float mH;
-};
-struct attackboxes{
-    int Index;
-    vector<BoxRect> AttackRects;
-    };
-
 
 vector<attackboxes>  CollisionBoxArray(string FileInput){
     vector<attackboxes> ReturnArray;
@@ -122,176 +82,6 @@ SDL_Rect BoxRectToSDL_Rect(BoxRect InRect){
 //split Anim
 // Into Action
 // and Task
-
-//Texture wrapper class
-class LTexture
-{
-	public:
-		//Initializes variables
-		LTexture();
-
-		//Deallocates memory
-		~LTexture();
-
-		//Loads image at specified path
-		bool loadFromFile( std::string path );
-
-		#ifdef _SDL_TTF_H
-		//Creates image from font string
-		bool loadFromRenderedText( std::string textureText, SDL_Color textColor );
-		#endif
-
-		//Deallocates texture
-		void free();
-
-		//Set color modulation
-		void setColor( Uint8 red, Uint8 green, Uint8 blue );
-
-		//Set blending
-		void setBlendMode( SDL_BlendMode blending );
-
-		//Set alpha modulation
-		void setAlpha( Uint8 alpha );
-
-		//Renders texture at given point
-		void render( int x, int y, float scaler, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE );
-
-		//Gets image dimensions
-		int getWidth();
-		int getHeight();
-
-	protected:
-		//The actual hardware texture
-		SDL_Texture* mTexture;
-
-		//Image dimensions
-		int mWidth;
-		int mHeight;
-};
-class CollisionLine{
-    public:
-    // You declare the initial and Lengths of the Collision line
-    // When you declare the class, you also specify if it is horizontal, vertical, or diagonal.
-
-    CollisionLine(const float BeginX,const float BeginY,const float InputLength,CollisionLineType InputType);
-
-
-    // Returns a bool if the line is out of bounds
-    bool DidCollide(float CheckX, float CheckY, float CheckXNext, float CheckYNext);
-
-    void RenderLine(SDL_Rect InputRect);
-
-    CollisionLineType GetType();
-
-    float GetLineLength();
-
-    CollisionCoord GetLineCoord();
-
-    void LineStats();
-
-    private:
-    // The Beginning and ending coordinates
-
-    CollisionCoord BeginCoord;
-    // The type of line this is
-
-    CollisionLineType ThisLine;
-
-    // It can be either horizontal or diagonal
-//    CollisionType ThisType;
-    // The Length of the line
-    float LineLength;
-    /* This boolean tells which side of the collision line you are
-    For Vertical Lines
-            True is right
-            False is left
-    For Diagonal Lines
-            True is above
-            False is Below
-    For Horizontal Lines
-            True is above
-            False is below
-    */
-    bool CollisionCondition;
-
-    vector<CollisionLine*> CoverBoxCollisionLines;
-};
-
-class RenderSprite{
-
-public:
-
- virtual void SetCam(float cXpos, float cYpos) = 0;
- virtual void render() = 0;
- virtual int getRenderPos() = 0;
-float getPosX(){
-        return mPosX;
-    }
-float getPosY(){
-        return mPosY;
-	}
-protected:
-
-//The X and Y offsets of the dot
-		float mPosX, mPosY;
-
-		//The velocity of the dot
-		float mVelX, mVelY;
-
-        //Vertical distance
-        float VertDis;
-
-        //Vertical Velocity
-        float VertVel;
-
-        int CposX;
-        int CposY;
-
-
-};
-
-class OcclusionTile: public RenderSprite{
-
-public:
-        OcclusionTile(SDL_Rect inRect, LTexture* inTecture, vector<CollisionLine> &CollisionlineVector);
-
-        void render();
-
-        void SetCam(float cXpos, float cYpos);
-
-        int getRenderPos(){ return WALL_HEIGHT+mPosY;}
-
-        void GetCoords(SDL_Rect CamRect, float InPosX, float InPosY);
-
-private:
-        SDL_Rect TileRect;
-
-        LTexture* ThisTexture = nullptr;
-
-        int ThisAlpha;
-
-        float inPosX = 0;
-        float inPosY = 0;
-        SDL_Rect camRect;
-
-};
-
-
-
-
-
-
-class LBGTile: public LTexture
-    {
-
-    public:
-        SDL_Rect GetRect();
-        void SetRect(SDL_Rect InRect);
-        void render(float scaler, SDL_Rect* clip = NULL,SDL_Rect* InputScreen = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
-    private:
-        SDL_Rect BGRect;
-    };
-
 
 class LTimer
 {
@@ -775,208 +565,6 @@ SDL_Joystick* gGameController = NULL;
 
 
 
-LTexture::LTexture()
-{
-	//Initialize
-	mTexture = NULL;
-	mWidth = 0;
-	mHeight = 0;
-}
-
-LTexture::~LTexture()
-{
-	//Deallocate
-	free();
-}
-
-bool LTexture::loadFromFile( std::string path )
-{
-	//Get rid of preexisting texture
-	free();
-
-	//The final texture
-	SDL_Texture* newTexture = NULL;
-
-	//Load image at specified path
-	SDL_Surface* loadedSurface = IMG_Load( path.c_str() );
-	if( loadedSurface == NULL )
-	{
-		printf( "Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError() );
-	}
-	else
-	{
-		//Color key image
-		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0xFF, 0, 0xFF ) );
-
-		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer, loadedSurface );
-		if( newTexture == NULL )
-		{
-			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
-		}
-		else
-		{
-			//Get image dimensions
-			mWidth = loadedSurface->w;
-			mHeight = loadedSurface->h;
-		}
-
-		//Get rid of old loaded surface
-		SDL_FreeSurface( loadedSurface );
-	}
-
-	//Return success
-	mTexture = newTexture;
-	return mTexture != NULL;
-}
-
-#ifdef _SDL_TTF_H
-bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColor )
-{
-	//Get rid of preexisting texture
-	free();
-
-	//Render text surface
-	SDL_Surface* textSurface = TTF_RenderText_Solid( gFont, textureText.c_str(), textColor );
-	if( textSurface != NULL )
-	{
-		//Create texture from surface pixels
-        mTexture = SDL_CreateTextureFromSurface( gRenderer, textSurface );
-		if( mTexture == NULL )
-		{
-			printf( "Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError() );
-		}
-		else
-		{
-			//Get image dimensions
-			mWidth = textSurface->w;
-			mHeight = textSurface->h;
-		}
-
-		//Get rid of old surface
-		SDL_FreeSurface( textSurface );
-	}
-	else
-	{
-		printf( "Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError() );
-	}
-
-
-	//Return success
-	return mTexture != NULL;
-}
-#endif
-
-void LTexture::free()
-{
-	//Free texture if it exists
-	if( mTexture != NULL )
-	{
-		SDL_DestroyTexture( mTexture );
-		mTexture = NULL;
-		mWidth = 0;
-		mHeight = 0;
-	}
-}
-
-void LTexture::setColor( Uint8 red, Uint8 green, Uint8 blue )
-{
-	//Modulate texture rgb
-	SDL_SetTextureColorMod( mTexture, red, green, blue );
-}
-
-void LTexture::setBlendMode( SDL_BlendMode blending )
-{
-	//Set blending function
-	SDL_SetTextureBlendMode( mTexture, blending );
-}
-
-void LTexture::setAlpha( Uint8 alpha )
-{
-	//Modulate texture alpha
-	SDL_SetTextureAlphaMod( mTexture, alpha );
-}
-
-void LTexture::render( int x, int y,float scaler, SDL_Rect* clip , double angle, SDL_Point* center, SDL_RendererFlip flip )
-{
-	//Set rendering space and render to screen
-	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
-
-	//Set clip rendering dimensions
-	if( clip != NULL )
-	{
-		renderQuad.w = clip->w*scaler;
-		renderQuad.h = clip->h*scaler;
-	}
-
-	//Render to screen
-	SDL_RenderCopyEx( gRenderer, mTexture, clip, &renderQuad, angle, center, flip );
-}
-
-int LTexture::getWidth()
-{
-	return mWidth;
-}
-
-int LTexture::getHeight()
-{
-	return mHeight;
-}
-
-SDL_Rect LBGTile::GetRect(){
-
-    return BGRect;
-
-}
-
-void LBGTile::SetRect(SDL_Rect InRect){
-
-    BGRect = InRect;
-
-}
-
-// MUST MODIFY
-void LBGTile::render(float scaler, SDL_Rect* clip ,SDL_Rect* InputScreen , double angle , SDL_Point* center , SDL_RendererFlip flip )
-{
-	//Set rendering space and render to screen
-    SDL_Rect renderQuad;
-    int ScreenX = InputScreen->x;
-    int ScreenY = InputScreen->y;
-
-	if(((BGRect.x -ScreenX)<=0 )&&((BGRect.y - ScreenY)<=0))
-    {
-        renderQuad = { 0, 0, mWidth, mHeight };
-
-
-    }
-    else if(((BGRect.x -ScreenX)<=0 )&&((BGRect.y - ScreenY)>0))
-    {
-        renderQuad = { 0, BGRect.y - ScreenY, mWidth, mHeight };
-
-
-    }
-    else if(((BGRect.x -ScreenX)>0 )&&((BGRect.y - ScreenY)<=0))
-    {
-        renderQuad = { BGRect.x -ScreenX, 0, mWidth, mHeight };
-
-
-    }
-	else{
-        renderQuad = { BGRect.x -ScreenX, BGRect.y - ScreenY, mWidth, mHeight };
-
-	}
-
-	//Set clip rendering dimensions
-	if( clip != NULL )
-	{
-		renderQuad.w = clip->w*scaler;
-		renderQuad.h = clip->h*scaler;
-	}
-
-	//Render to screen
-	SDL_RenderCopyEx( gRenderer, mTexture, clip, &renderQuad, angle, center, flip );
-}
-
 
 Enemy::Enemy()
 {
@@ -1126,7 +714,7 @@ void MeleeEnemy::render()
     int rendY = mPosY - CposY;
 
     if(blinker){
-    gShadowTexture.render( mPosX - CposX-5, mPosY-CposY+150,ENEMY_SCALE, &ShadowRect );
+    gShadowTexture.render( gRenderer,mPosX - CposX-5, mPosY-CposY+150,ENEMY_SCALE, &ShadowRect );
 
     }
     else{
@@ -1135,11 +723,11 @@ void MeleeEnemy::render()
 
     if(IsFlipped == false){
 
-    gMeleeEnemyTexture.render( mPosX - CposX-OffSetArray[ThisFrame], rendY,ENEMY_SCALE, Anim_Rect );
+    gMeleeEnemyTexture.render(gRenderer, mPosX - CposX-OffSetArray[ThisFrame], rendY,ENEMY_SCALE, Anim_Rect );
 
     }
     else if(IsFlipped == true){
-    gMeleeEnemyTexture.render( mPosX - CposX-OffSetArrayFlipped[ThisFrame], rendY,ENEMY_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
+    gMeleeEnemyTexture.render( gRenderer,mPosX - CposX-OffSetArrayFlipped[ThisFrame], rendY,ENEMY_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
 
     }
     if(HitBoxFlag){
@@ -1743,7 +1331,7 @@ void Enemy::render()
 
     if(blinker){
 
-        gShadowTexture.render( mPosX - CposX+27, mPosY-CposY+110,1.5, &ShadowRect );
+        gShadowTexture.render(gRenderer, mPosX - CposX+27, mPosY-CposY+110,1.5, &ShadowRect );
 
     }
 
@@ -1761,11 +1349,11 @@ void Enemy::render()
             gKunoTexture.render( mPosX - CposX, mPosY - CposY,JILL_SCALE, clip );
             }
             else{  */
-            gGunEnemyTexture.render( mPosX - CposX, rendY,ENEMY_SCALE, Anim_Rect );
+            gGunEnemyTexture.render( gRenderer,mPosX - CposX, rendY,ENEMY_SCALE, Anim_Rect );
 
     }
         else if(IsFlipped == true){
-            gGunEnemyTexture.render( mPosX - CposX, rendY,ENEMY_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
+            gGunEnemyTexture.render( gRenderer,mPosX - CposX, rendY,ENEMY_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
             }
 
 
@@ -2487,7 +2075,7 @@ void Dawn::render()
 //blinker is a boolean that goes on and off
 //This function renders the shadow
 if(blinker){
-    gJillTexture.render( mPosX - CposX, mPosY-CposY+110-ShadowHeight,DAWN_SCALE, &ShadowRect );
+    gJillTexture.render( gRenderer,mPosX - CposX, mPosY-CposY+110-ShadowHeight,DAWN_SCALE, &ShadowRect );
 
 }
 
@@ -2503,11 +2091,11 @@ if(blinker){
             gKunoTexture.render( mPosX - CposX, mPosY - CposY,JILL_SCALE, clip );
             }
             else{  */
-            gJillTexture.render( mPosX - CposX+AnimOffsetX, rendY,DAWN_SCALE, Anim_Rect );
+            gJillTexture.render( gRenderer,mPosX - CposX+AnimOffsetX, rendY,DAWN_SCALE, Anim_Rect );
 
     }
     else if(IsFlipped == true){
-    gJillTexture.render( mPosX - CposX-AnimOffsetX, rendY,DAWN_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
+    gJillTexture.render( gRenderer,mPosX - CposX-AnimOffsetX, rendY,DAWN_SCALE, Anim_Rect,0.0,NULL, SDL_FLIP_HORIZONTAL );
     }
 
     SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
@@ -2866,7 +2454,7 @@ void CoverBox::render(){
 
 
     //if((0<(mPosY - CposY))&&((mPosY - CposY)<SCREEN_HEIGHT)&&(0<(mPosX - CposX))&&((mPosX - CposX)<SCREEN_WIDTH+107)){
-    gBoxTexture.render(mPosX - CposX, mPosY - CposY, BOX_SCALE, &BoxRect);
+    gBoxTexture.render(gRenderer,mPosX - CposX, mPosY - CposY, BOX_SCALE, &BoxRect);
 
  /*   SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
     SDL_Rect fillRect = { mPosX - CposX, mPosY - CposY+219, 300, 3};
@@ -2990,91 +2578,6 @@ bool LTimer::isPaused()
 {
 	//Timer is running and paused
     return mPaused && mStarted;
-}
-CollisionLine::CollisionLine(const float BeginX,const float BeginY,const float InputLength,CollisionLineType InputType){
-
-ThisLine = InputType;
-
-LineLength = InputLength;
-
-BeginCoord.mX = BeginX;
-BeginCoord.mY = BeginY;
-
- }
-
-
-
-
-
-
-
-bool CollisionLine::DidCollide(float CheckX, float  CheckY, float CheckXNext, float CheckYNext){
-/*
-if(ThisLine == HORIZONTAL_LINE && CollisionCondition  == true){
-
-    if(BeginCoord.mX<CheckX && CheckX < (BeginCoord.mX + LineLength) && CheckY < BeginCoord.mY){
-
-        if
-        return true;
-    }
-
-}
-
-if(ThisLine == HORIZONTAL_LINE && CollisionCondition  == false){
-    if(BeginCoord.mX<CheckX && CheckX < (BeginCoord.mX + LineLength) && CheckY > BeginCoord.mY){
-
-        return true;
-    }
-
-    return false;
-}
-
-if(ThisLine == DIAGONAL_LINE &&CollisionCondition == true){
-
-}
-if(ThisLine == DIAGONAL_LINE &&CollisionCondition == false){
-
-}
-*/
-
-return false;
-}
-
-
-
-void CollisionLine::RenderLine(SDL_Rect InputRect){
-  SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x67 );
-  if((ThisLine == HORIZONTAL_LINE_LOWER_STOP)||(ThisLine == HORIZONTAL_LINE_UPPER_STOP)){
- SDL_RenderDrawLine(gRenderer,(BeginCoord.mX - InputRect.x  ),(BeginCoord.mY - InputRect.y ),(BeginCoord.mX - InputRect.x + LineLength),(BeginCoord.mY - InputRect.y ));
-  }
-  else if ((ThisLine == DIAGONAL_LINE_LEFT_STOP)||(ThisLine == DIAGONAL_LINE_RIGHT_STOP)){
- SDL_RenderDrawLine(gRenderer,(BeginCoord.mX - InputRect.x  ),(BeginCoord.mY - InputRect.y ),(BeginCoord.mX+LineLength*.7071067- InputRect.x),(BeginCoord.mY+LineLength*.7071067 - InputRect.y ));
-  }
-
-}
-CollisionLineType CollisionLine::GetType(){
-
-
-    return ThisLine;
-
-}
-
-CollisionCoord CollisionLine::GetLineCoord(){
-
-    return BeginCoord;
-
-}
-
-float CollisionLine::GetLineLength(){
-
-    return LineLength;
-
-}
-
-void CollisionLine::LineStats(){
-
-    cout<<" This is a Collision line at "<<BeginCoord.mX<<" "<<BeginCoord.mY<<" Of Length "<<LineLength<<endl;
-
 }
 
 SDL_Rect Intersector(SDL_Rect ScreenRect, SDL_Rect BGRect){
@@ -3223,7 +2726,7 @@ void OcclusionTile::render(){
         else if (ThisAlpha<0){ThisAlpha = 0;}
     }
     if(ThisAlpha !=0){
-        ThisTexture->render(inX,inY,1, &RenderRect );
+        ThisTexture->render(gRenderer,inX,inY,1, &RenderRect );
     }
 //    cout<<ThisAlpha<<endl;
 }
@@ -3333,25 +2836,25 @@ bool loadMedia()
 
 
 	// Kuno addition: load the kunoichi walk strip instead of the dot
-	if( !gJillTexture.loadFromFile( "./DawnSprites2.png" ) )
+	if( !gJillTexture.loadFromFile(gRenderer, "./DawnSprites2.png") )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
 	}
 
 
-     	if( !gBGTextures.loadFromFile( "./SneakRoomFloor.png" ) )
+     	if( !gBGTextures.loadFromFile(gRenderer, "./SneakRoomFloor.png") )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
 	}
-        if( !gBoxTexture.loadFromFile( "./Box.png" ) )
+        if( !gBoxTexture.loadFromFile(gRenderer, "./Box.png") )
 
 	{
 		printf( "Failed to load background texture!\n" );
 		success = false;
 	}
-        if(!gShadowTexture.loadFromFile("./Shadow.png")){
+        if(!gShadowTexture.loadFromFile(gRenderer, "./Shadow.png")){
         printf( "Failed to load background texture!\n" );
 		success = false;
         }/*
@@ -3359,12 +2862,12 @@ bool loadMedia()
         printf( "Failed to load background texture!\n" );
 		success = false;
         }*/
-        if(!gMeleeEnemyTexture.loadFromFile("./MeleeEnemy1.png")){
+        if(!gMeleeEnemyTexture.loadFromFile(gRenderer, "./MeleeEnemy1.png")){
         printf( "Failed to load background texture!\n" );
 		success = false;
         }
 
-        if(!gPurpWall1.loadFromFile("./SneakRoomWall1.png")){
+        if(!gPurpWall1.loadFromFile(gRenderer, "./SneakRoomWall1.png")){
         printf( "Failed to load background texture!\n" );
 		success = false;
         }
@@ -3778,7 +3281,7 @@ int main( int argc, char* args[] )
               //  gBGTexture.render( 0, 0,1, &camera );
 
 
-                gBGTextures.render(0,0,1,&camera);
+                gBGTextures.render(gRenderer,0,0,1,&camera);
 
                 oPurpWall1.GetCoords(camera,jill.getPosX(),jill.getPosY());
                 oPurpWall2.GetCoords(camera,jill.getPosX(),jill.getPosY());
@@ -3811,8 +3314,8 @@ int main( int argc, char* args[] )
                         if(debug){
 
                 gFont = TTF_OpenFont( "./lazy.ttf", 20 );
-                gTextTexture.loadFromRenderedText(jill.getPosXString()+" "+jill.getPosYString()+" "+jill.getVertString(), TextColor);
-                gTextTexture.render( DEBUG_X, DEBUG_Y,1 );
+                gTextTexture.loadFromRenderedText(gRenderer, gFont, jill.getPosXString()+" "+jill.getPosYString()+" "+jill.getVertString(), TextColor);
+                gTextTexture.render(gRenderer, DEBUG_X, DEBUG_Y,1 );
 
                         }
                         else{
@@ -3841,11 +3344,11 @@ int main( int argc, char* args[] )
                 }
                 if(renderflag3){
 
-                        //              if(blinker){
-                 SDL_SetRenderDrawColor( gRenderer, 0x2a, 0xFF, 0xFF, 0x67 );
-                  SDL_Rect fillRect = { 400, 100, 50, 50};
-                  SDL_RenderFillRect( gRenderer, &fillRect );
-                        //                }
+                    //              if(blinker){
+                    SDL_SetRenderDrawColor( gRenderer, 0x2a, 0xFF, 0xFF, 0x67 );
+                    SDL_Rect fillRect = { 400, 100, 50, 50};
+                    SDL_RenderFillRect( gRenderer, &fillRect );
+                    //                }
 
 
                 }
@@ -3857,16 +3360,12 @@ int main( int argc, char* args[] )
                 //LineOne.RenderLine(camera);
 
                 for(int i = 0; i<CollisionVector.size();i++){
-                    CollisionVector.at(i).RenderLine(camera);
+                    CollisionVector.at(i).RenderLine(gRenderer, camera);
                     }
                 }
 
 				//Update screen
 				SDL_RenderPresent( gRenderer );
-
-
-
-
 			}
 		}
 	}
